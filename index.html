@@ -1,0 +1,2297 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Enterprise Monitoring Same Store — Alfamart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+<style>
+/* =========================================================
+   DESIGN TOKENS
+========================================================= */
+:root{
+  --primary:#005BAC;
+  --primary-dark:#00468A;
+  --primary-light:#E8F1FB;
+  --secondary:#ED1C24;
+  --accent:#F9A825;
+  --success:#16A34A;
+  --success-light:#DCFCE7;
+  --danger:#DC2626;
+  --danger-light:#FEE2E2;
+  --warning:#F59E0B;
+  --warning-light:#FEF3C7;
+
+  --bg:#F6F8FB;
+  --surface:#FFFFFF;
+  --surface-2:#FAFBFD;
+  --text:#0F172A;
+  --text-muted:#64748B;
+  --text-soft:#94A3B8;
+  --border:#E5E9F0;
+  --border-strong:#CBD5E1;
+
+  --shadow-sm:0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.06);
+  --shadow-md:0 4px 6px -1px rgba(15,23,42,.06), 0 2px 4px -2px rgba(15,23,42,.05);
+  --shadow-lg:0 10px 25px -5px rgba(15,23,42,.08), 0 8px 10px -6px rgba(15,23,42,.05);
+  --shadow-xl:0 20px 40px -10px rgba(15,23,42,.12);
+
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:16px;
+  --radius-xl:20px;
+
+  --sidebar-w:260px;
+  --header-h:72px;
+
+  --font:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --transition:.25s cubic-bezier(.4,0,.2,1);
+}
+
+[data-theme="dark"]{
+  --bg:#0B1220;
+  --surface:#111A2E;
+  --surface-2:#0E1628;
+  --text:#E5E9F0;
+  --text-muted:#94A3B8;
+  --text-soft:#64748B;
+  --border:#1E293B;
+  --border-strong:#334155;
+  --primary-light:#0E2747;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+  --shadow-md:0 4px 10px rgba(0,0,0,.35);
+  --shadow-lg:0 10px 25px rgba(0,0,0,.4);
+  --shadow-xl:0 20px 40px rgba(0,0,0,.5);
+}
+
+/* =========================================================
+   RESET
+========================================================= */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  font-size:14px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+  transition:background var(--transition), color var(--transition);
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-soft)}
+
+/* =========================================================
+   LAYOUT
+========================================================= */
+.app{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{
+  position:fixed;
+  top:0;left:0;bottom:0;
+  width:var(--sidebar-w);
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  z-index:100;
+  transition:transform var(--transition);
+}
+.sidebar-brand{
+  height:var(--header-h);
+  display:flex;align-items:center;gap:12px;
+  padding:0 20px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
+  color:#fff;
+}
+.sidebar-brand .logo{
+  width:40px;height:40px;border-radius:10px;
+  background:#fff;display:flex;align-items:center;justify-content:center;
+  font-weight:800;color:var(--primary);font-size:18px;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+}
+.sidebar-brand .brand-text{line-height:1.2}
+.sidebar-brand .brand-text .t1{font-weight:700;font-size:14px;letter-spacing:.3px}
+.sidebar-brand .brand-text .t2{font-size:11px;opacity:.85;font-weight:400}
+
+.sidebar-nav{flex:1;padding:16px 12px;overflow-y:auto}
+.nav-section{margin-bottom:18px}
+.nav-title{
+  font-size:10px;font-weight:700;letter-spacing:1.2px;
+  color:var(--text-soft);text-transform:uppercase;
+  padding:0 12px;margin-bottom:6px;
+}
+.nav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 14px;border-radius:10px;
+  color:var(--text-muted);font-weight:500;font-size:13.5px;
+  cursor:pointer;transition:all var(--transition);
+  margin-bottom:2px;position:relative;
+}
+.nav-item i{font-size:18px}
+.nav-item:hover{background:var(--primary-light);color:var(--primary)}
+.nav-item.active{
+  background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
+  color:#fff;box-shadow:0 4px 12px rgba(0,91,172,.25);
+}
+.nav-item.active::before{
+  content:'';position:absolute;left:-12px;top:50%;transform:translateY(-50%);
+  width:4px;height:24px;background:var(--accent);border-radius:0 4px 4px 0;
+}
+.nav-item .badge{
+  margin-left:auto;background:var(--secondary);color:#fff;
+  font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;
+}
+
+.sidebar-footer{
+  padding:14px 16px;border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+  font-size:11px;color:var(--text-muted);
+}
+.sidebar-footer .avatar{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--secondary),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:700;font-size:13px;
+}
+
+/* MAIN */
+.main{
+  margin-left:var(--sidebar-w);
+  flex:1;display:flex;flex-direction:column;min-height:100vh;
+}
+
+/* HEADER */
+.header{
+  position:sticky;top:0;z-index:50;
+  height:var(--header-h);
+  background:rgba(255,255,255,.85);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;
+  padding:0 28px;gap:16px;
+}
+[data-theme="dark"] .header{background:rgba(17,26,46,.85)}
+
+.menu-toggle{
+  display:none;width:40px;height:40px;border-radius:10px;
+  align-items:center;justify-content:center;
+  background:var(--surface-2);color:var(--text);
+}
+.header-title{flex:1;min-width:0}
+.header-title h1{
+  font-size:17px;font-weight:700;letter-spacing:.2px;
+  color:var(--text);margin-bottom:2px;
+}
+.header-title h1 .accent{color:var(--secondary)}
+.header-title p{font-size:12px;color:var(--text-muted);font-weight:400}
+
+.header-actions{display:flex;align-items:center;gap:10px}
+.icon-btn{
+  width:40px;height:40px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--surface-2);color:var(--text);
+  position:relative;transition:all var(--transition);
+}
+.icon-btn:hover{background:var(--primary-light);color:var(--primary)}
+.icon-btn .dot{
+  position:absolute;top:8px;right:8px;
+  width:8px;height:8px;border-radius:50%;
+  background:var(--secondary);border:2px solid var(--surface);
+}
+.profile-btn{
+  display:flex;align-items:center;gap:10px;
+  padding:6px 12px 6px 6px;border-radius:40px;
+  background:var(--surface-2);transition:all var(--transition);
+}
+.profile-btn:hover{background:var(--primary-light)}
+.profile-btn .avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:700;font-size:12px;
+}
+.profile-btn .info{line-height:1.2;text-align:left}
+.profile-btn .info .n{font-size:12.5px;font-weight:600}
+.profile-btn .info .r{font-size:10.5px;color:var(--text-muted)}
+
+/* CONTENT */
+.content{padding:28px;flex:1}
+.page{display:none;animation:fadeIn .4s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.page-head{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  margin-bottom:22px;gap:16px;flex-wrap:wrap;
+}
+.page-head h2{font-size:22px;font-weight:700;letter-spacing:-.3px}
+.page-head p{font-size:13px;color:var(--text-muted);margin-top:2px}
+.page-head .actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 18px;border-radius:10px;
+  font-weight:600;font-size:13px;
+  transition:all var(--transition);
+  border:1px solid transparent;
+}
+.btn i{font-size:16px}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 4px 12px rgba(0,91,172,.25)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,91,172,.35)}
+.btn-secondary{background:var(--surface);color:var(--text);border-color:var(--border)}
+.btn-secondary:hover{border-color:var(--primary);color:var(--primary)}
+.btn-danger{background:var(--secondary);color:#fff}
+.btn-danger:hover{background:#c8131a}
+.btn-ghost{background:transparent;color:var(--text-muted)}
+.btn-ghost:hover{background:var(--surface-2);color:var(--text)}
+.btn-sm{padding:7px 12px;font-size:12px}
+
+/* CARDS */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);
+  transition:all var(--transition);
+}
+.card:hover{box-shadow:var(--shadow-md)}
+.card-head{
+  padding:18px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+}
+.card-head .ico{
+  width:38px;height:38px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;color:#fff;
+}
+.card-head h3{font-size:14.5px;font-weight:700;letter-spacing:.2px}
+.card-head p{font-size:11.5px;color:var(--text-muted);margin-top:1px}
+.card-body{padding:20px}
+
+.ico-blue{background:linear-gradient(135deg,var(--primary),var(--primary-dark))}
+.ico-red{background:linear-gradient(135deg,var(--secondary),#c8131a)}
+.ico-orange{background:linear-gradient(135deg,var(--accent),#E68900)}
+.ico-green{background:linear-gradient(135deg,var(--success),#0F7A37)}
+.ico-purple{background:linear-gradient(135deg,#7C3AED,#5B21B6)}
+.ico-teal{background:linear-gradient(135deg,#0D9488,#0F766E)}
+
+/* GRID */
+.grid{display:grid;gap:20px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.grid-6{grid-template-columns:repeat(6,1fr)}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-label{
+  font-size:11.5px;font-weight:600;
+  color:var(--text-muted);text-transform:uppercase;
+  letter-spacing:.5px;
+}
+.form-control{
+  padding:10px 12px;border:1px solid var(--border);
+  border-radius:10px;background:var(--surface-2);
+  color:var(--text);transition:all var(--transition);
+  font-size:13.5px;font-weight:500;
+}
+.form-control:focus{
+  outline:none;border-color:var(--primary);
+  background:var(--surface);
+  box-shadow:0 0 0 3px rgba(0,91,172,.12);
+}
+.form-control[readonly]{background:var(--primary-light);color:var(--primary);font-weight:600}
+
+/* KPI */
+.kpi{
+  padding:18px;border-radius:var(--radius);
+  background:var(--surface);border:1px solid var(--border);
+  position:relative;overflow:hidden;
+  transition:all var(--transition);
+}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.kpi::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--primary),var(--accent));
+}
+.kpi.red::before{background:linear-gradient(90deg,var(--secondary),var(--accent))}
+.kpi.green::before{background:linear-gradient(90deg,var(--success),#22C55E)}
+.kpi.orange::before{background:linear-gradient(90deg,var(--accent),#F97316)}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.kpi-label{font-size:11.5px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.kpi-ico{
+  width:32px;height:32px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--primary-light);color:var(--primary);font-size:16px;
+}
+.kpi.red .kpi-ico{background:var(--danger-light);color:var(--danger)}
+.kpi.green .kpi-ico{background:var(--success-light);color:var(--success)}
+.kpi.orange .kpi-ico{background:var(--warning-light);color:var(--warning)}
+.kpi-value{font-size:22px;font-weight:800;letter-spacing:-.5px;line-height:1.1}
+.kpi-sub{font-size:11.5px;color:var(--text-muted);margin-top:4px;display:flex;align-items:center;gap:4px}
+.kpi-sub .up{color:var(--success);font-weight:700}
+.kpi-sub .down{color:var(--danger);font-weight:700}
+
+/* STATUS CHIP */
+.chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:700;
+}
+.chip-success{background:var(--success-light);color:var(--success)}
+.chip-danger{background:var(--danger-light);color:var(--danger)}
+.chip-warning{background:var(--warning-light);color:var(--warning)}
+.chip-info{background:var(--primary-light);color:var(--primary)}
+
+/* ACTION PLAN */
+.action-list{display:flex;flex-direction:column;gap:10px}
+.action-item{
+  display:flex;gap:12px;padding:14px;
+  border:1px solid var(--border);border-radius:10px;
+  background:var(--surface-2);
+  transition:all var(--transition);
+}
+.action-item:hover{border-color:var(--primary);background:var(--primary-light)}
+.action-num{
+  width:28px;height:28px;border-radius:8px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;
+}
+.action-content{flex:1}
+.action-title{font-size:13px;font-weight:700;margin-bottom:3px}
+.action-desc{font-size:12px;color:var(--text-muted);line-height:1.5}
+.action-tag{
+  margin-top:6px;display:inline-block;
+  font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--primary);
+}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{
+  background:var(--primary);color:#fff;
+  padding:11px 14px;text-align:left;font-weight:600;
+  font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;
+  border-bottom:2px solid var(--primary-dark);
+}
+td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface-2)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
+
+/* TABS */
+.tabs{
+  display:flex;gap:4px;padding:4px;
+  background:var(--surface-2);border-radius:12px;
+  border:1px solid var(--border);
+  margin-bottom:20px;width:fit-content;flex-wrap:wrap;
+}
+.tab{
+  padding:8px 16px;border-radius:8px;
+  font-size:12.5px;font-weight:600;color:var(--text-muted);
+  transition:all var(--transition);
+}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--surface);color:var(--primary);box-shadow:var(--shadow-sm)}
+
+/* REPORT PREVIEW (A4) */
+.report-preview{
+  background:#fff;color:#000;
+  width:210mm;min-height:297mm;
+  margin:0 auto;padding:18mm 18mm;
+  box-shadow:var(--shadow-xl);
+  border-radius:4px;
+  font-family:'Inter',sans-serif;
+  font-size:11pt;
+}
+.report-preview *{color:#000 !important}
+.rp-header{
+  display:flex;align-items:center;gap:16px;
+  padding-bottom:14px;border-bottom:3px double #005BAC;
+  margin-bottom:18px;
+}
+.rp-logo{
+  width:70px;height:70px;border-radius:10px;
+  background:linear-gradient(135deg,#ED1C24,#c8131a);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:800;font-size:22px;
+  flex-shrink:0;
+}
+.rp-logo img{width:100%;height:100%;border-radius:10px;object-fit:cover}
+.rp-header-info{flex:1}
+.rp-header-info .sat{font-size:10pt;color:#005BAC;font-weight:700;letter-spacing:1px}
+.rp-header-info h1{font-size:16pt;font-weight:800;margin:3px 0;color:#005BAC !important}
+.rp-header-info p{font-size:9pt;color:#64748B !important}
+.rp-meta{
+  display:flex;justify-content:space-between;
+  font-size:9pt;margin-bottom:14px;
+  padding:8px 12px;background:#E8F1FB;border-radius:6px;
+}
+.rp-section{margin-bottom:18px}
+.rp-section h2{
+  font-size:12pt;font-weight:800;color:#005BAC !important;
+  padding:6px 10px;background:#E8F1FB;
+  border-left:4px solid #005BAC;margin-bottom:10px;
+  border-radius:0 4px 4px 0;
+}
+.rp-section h3{font-size:10.5pt;font-weight:700;margin:10px 0 6px;color:#0F172A !important}
+.rp-table{width:100%;border-collapse:collapse;font-size:9.5pt;margin-bottom:10px}
+.rp-table th{
+  background:#005BAC !important;color:#fff !important;
+  padding:7px 9px;text-align:left;font-weight:600;
+  border:1px solid #00468A;font-size:9pt;
+}
+.rp-table td{
+  padding:6px 9px;border:1px solid #CBD5E1;
+  color:#0F172A !important;font-size:9.5pt;
+}
+.rp-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.rp-table tr:nth-child(even) td{background:#F8FAFC !important}
+.rp-table tr.total td{background:#E8F1FB !important;font-weight:700}
+.rp-chart{
+  margin:14px 0;padding:12px;border:1px solid #E5E9F0;
+  border-radius:6px;background:#FAFBFD;
+}
+.rp-chart canvas{max-width:100%;height:180px !important}
+.rp-action{
+  margin:10px 0;padding:10px 12px;
+  border-left:3px solid #ED1C24;background:#FEF2F2;
+  font-size:9.5pt;
+}
+.rp-action strong{color:#ED1C24 !important}
+.rp-notes{
+  margin-top:18px;padding:10px 12px;
+  background:#F8FAFC;border:1px dashed #CBD5E1;
+  border-radius:6px;font-size:9pt;color:#475569 !important;
+}
+.rp-notes strong{color:#005BAC !important}
+.rp-sign{
+  margin-top:30px;display:flex;justify-content:flex-end;
+}
+.rp-sign-box{text-align:center;min-width:180px}
+.rp-sign-box .place{font-size:9.5pt;margin-bottom:6px}
+.rp-sign-box .sig-img{height:70px;margin:6px auto;display:flex;align-items:center;justify-content:center}
+.rp-sign-box .sig-img img{max-height:70px;max-width:160px}
+.rp-sign-box .name{font-weight:700;font-size:10.5pt;border-top:1px solid #000;padding-top:4px;margin-top:4px}
+.rp-sign-box .role{font-size:9pt;color:#475569 !important}
+
+/* HISTORY */
+.history-item{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 16px;border:1px solid var(--border);
+  border-radius:10px;background:var(--surface);
+  margin-bottom:10px;transition:all var(--transition);
+}
+.history-item:hover{border-color:var(--primary);box-shadow:var(--shadow-md)}
+.history-icon{
+  width:44px;height:44px;border-radius:10px;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:20px;flex-shrink:0;
+}
+.history-info{flex:1;min-width:0}
+.history-info .h-title{font-weight:700;font-size:13.5px;margin-bottom:2px}
+.history-info .h-meta{font-size:11.5px;color:var(--text-muted);display:flex;gap:12px;flex-wrap:wrap}
+.history-actions{display:flex;gap:6px}
+
+/* SETTINGS */
+.settings-section{margin-bottom:24px}
+.settings-section h3{
+  font-size:13px;font-weight:700;margin-bottom:12px;
+  padding-bottom:8px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+}
+.toggle-switch{
+  position:relative;width:44px;height:24px;
+  background:var(--border-strong);border-radius:20px;
+  cursor:pointer;transition:all var(--transition);
+}
+.toggle-switch::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:20px;height:20px;border-radius:50%;
+  background:#fff;transition:all var(--transition);
+  box-shadow:0 2px 4px rgba(0,0,0,.2);
+}
+.toggle-switch.active{background:var(--primary)}
+.toggle-switch.active::after{left:22px}
+
+/* ABOUT */
+.about-hero{
+  padding:40px;border-radius:var(--radius-lg);
+  background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
+  color:#fff;text-align:center;margin-bottom:24px;
+  position:relative;overflow:hidden;
+}
+.about-hero::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 20% 50%, rgba(249,168,37,.2) 0%, transparent 50%),
+             radial-gradient(circle at 80% 20%, rgba(237,28,36,.15) 0%, transparent 50%);
+}
+.about-hero > *{position:relative;z-index:1}
+.about-hero .logo-big{
+  width:80px;height:80px;margin:0 auto 16px;
+  background:#fff;border-radius:20px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--primary);font-weight:800;font-size:32px;
+  box-shadow:0 10px 30px rgba(0,0,0,.2);
+}
+.about-hero h2{font-size:28px;font-weight:800;margin-bottom:6px}
+.about-hero p{opacity:.9;font-size:14px}
+
+/* FOOTER */
+.footer{
+  padding:16px 28px;border-top:1px solid var(--border);
+  background:var(--surface);
+  display:flex;align-items:center;justify-content:space-between;
+  gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-muted);
+}
+.footer .brand{display:flex;align-items:center;gap:8px;font-weight:600}
+.footer .brand i{color:var(--primary);font-size:16px}
+
+/* SKELETON */
+.skeleton{
+  background:linear-gradient(90deg,var(--surface-2) 0%,var(--border) 50%,var(--surface-2) 100%);
+  background-size:200% 100%;
+  animation:skeleton 1.5s infinite;
+  border-radius:6px;
+}
+@keyframes skeleton{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* TOAST */
+.toast-container{
+  position:fixed;top:20px;right:20px;z-index:9999;
+  display:flex;flex-direction:column;gap:10px;
+}
+.toast{
+  padding:12px 18px;border-radius:10px;
+  background:var(--surface);border:1px solid var(--border);
+  box-shadow:var(--shadow-lg);
+  display:flex;align-items:center;gap:10px;
+  min-width:280px;animation:slideIn .3s ease;
+  font-size:13px;font-weight:500;
+}
+.toast.success{border-left:4px solid var(--success)}
+.toast.success i{color:var(--success)}
+.toast.error{border-left:4px solid var(--danger)}
+.toast.error i{color:var(--danger)}
+.toast.info{border-left:4px solid var(--primary)}
+.toast.info i{color:var(--primary)}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* MODAL */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(15,23,42,.5);
+  backdrop-filter:blur(4px);z-index:1000;
+  display:none;align-items:center;justify-content:center;
+  padding:20px;animation:fadeIn .2s ease;
+}
+.modal-backdrop.active{display:flex}
+.modal{
+  background:var(--surface);border-radius:var(--radius-lg);
+  max-width:500px;width:100%;max-height:90vh;overflow-y:auto;
+  box-shadow:var(--shadow-xl);animation:scaleIn .3s ease;
+}
+@keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-head{
+  padding:18px 22px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-head h3{font-size:15px;font-weight:700}
+.modal-body{padding:22px}
+.modal-foot{
+  padding:16px 22px;border-top:1px solid var(--border);
+  display:flex;justify-content:flex-end;gap:8px;
+}
+
+/* RESPONSIVE */
+@media (max-width:1100px){
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .grid-6{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:900px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0);box-shadow:var(--shadow-xl)}
+  .main{margin-left:0}
+  .menu-toggle{display:flex}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .grid-6{grid-template-columns:repeat(2,1fr)}
+  .content{padding:18px}
+  .header{padding:0 18px}
+  .profile-btn .info{display:none}
+  .report-preview{width:100%;padding:12mm}
+}
+@media (max-width:560px){
+  .grid-4,.grid-6{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .header-title h1{font-size:14px}
+  .header-title p{display:none}
+  .page-head{flex-direction:column;align-items:flex-start}
+}
+
+/* PRINT */
+@media print{
+  body *{visibility:hidden}
+  .report-preview,.report-preview *{visibility:visible}
+  .report-preview{
+    position:absolute;left:0;top:0;width:100%;
+    box-shadow:none;margin:0;padding:15mm;
+  }
+  @page{size:A4;margin:0}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo" id="sidebarLogo">A</div>
+      <div class="brand-text">
+        <div class="t1">ALFAMART</div>
+        <div class="t2">Enterprise System</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-title">Main</div>
+        <div class="nav-item active" data-page="dashboard"><i class="ri-dashboard-3-line"></i>Dashboard</div>
+        <div class="nav-item" data-page="input"><i class="ri-edit-box-line"></i>Input Monitoring</div>
+        <div class="nav-item" data-page="report"><i class="ri-file-chart-line"></i>Generate Report</div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-title">Data</div>
+        <div class="nav-item" data-page="history"><i class="ri-history-line"></i>History Report<span class="badge" id="historyBadge">0</span></div>
+        <div class="nav-item" data-page="settings"><i class="ri-settings-4-line"></i>Settings</div>
+        <div class="nav-item" data-page="about"><i class="ri-information-line"></i>About</div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar" id="sidebarAvatar">B</div>
+      <div>
+        <div style="font-weight:600;color:var(--text)" id="sidebarUser">Brandon</div>
+        <div>Chief Of Store</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <div class="main">
+
+    <!-- HEADER -->
+    <header class="header">
+      <button class="menu-toggle icon-btn" id="menuToggle"><i class="ri-menu-line"></i></button>
+      <div class="header-title">
+        <h1>LAPORAN MONITORING <span class="accent">SAME STORE</span></h1>
+        <p>Pencapaian IK&T & Net Sales (MoM) — Retail Performance Monitoring System</p>
+      </div>
+      <div class="header-actions">
+        <div style="font-size:11px;color:var(--text-muted);text-align:right;line-height:1.3">
+          <div style="font-weight:600;color:var(--text)" id="headerDate">—</div>
+          <div id="headerTime">—</div>
+        </div>
+        <button class="icon-btn" id="themeToggle" title="Toggle Dark Mode"><i class="ri-moon-line"></i></button>
+        <button class="icon-btn" title="Notifications"><i class="ri-notification-3-line"></i><span class="dot"></span></button>
+        <button class="profile-btn">
+          <div class="avatar" id="headerAvatar">B</div>
+          <div class="info">
+            <div class="n" id="headerUser">Brandon</div>
+            <div class="r">Chief Of Store</div>
+          </div>
+        </button>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+      <!-- ============ DASHBOARD ============ -->
+      <section class="page active" id="page-dashboard">
+        <div class="page-head">
+          <div>
+            <h2>Dashboard Overview</h2>
+            <p>Ringkasan performa toko secara real-time</p>
+          </div>
+          <div class="actions">
+            <button class="btn btn-secondary" onclick="resetForm()"><i class="ri-refresh-line"></i>Reset</button>
+            <button class="btn btn-primary" onclick="navigateTo('input')"><i class="ri-add-line"></i>Input Data</button>
+          </div>
+        </div>
+
+        <!-- KPI ROW -->
+        <div class="grid grid-4" style="margin-bottom:20px">
+          <div class="kpi">
+            <div class="kpi-top">
+              <div class="kpi-label">Net Sales</div>
+              <div class="kpi-ico"><i class="ri-money-dollar-circle-line"></i></div>
+            </div>
+            <div class="kpi-value" id="kpiNS">Rp 0</div>
+            <div class="kpi-sub"><span class="up" id="kpiNSpct">0%</span> dari target</div>
+          </div>
+          <div class="kpi green">
+            <div class="kpi-top">
+              <div class="kpi-label">Achievement</div>
+              <div class="kpi-ico"><i class="ri-target-line"></i></div>
+            </div>
+            <div class="kpi-value" id="kpiAch">0%</div>
+            <div class="kpi-sub">Target 105%</div>
+          </div>
+          <div class="kpi orange">
+            <div class="kpi-top">
+              <div class="kpi-label">Growth MoM</div>
+              <div class="kpi-ico"><i class="ri-line-chart-line"></i></div>
+            </div>
+            <div class="kpi-value" id="kpiGrowth">0%</div>
+            <div class="kpi-sub" id="kpiGrowthRp">Rp 0</div>
+          </div>
+          <div class="kpi red">
+            <div class="kpi-top">
+              <div class="kpi-label">Gross Margin</div>
+              <div class="kpi-ico"><i class="ri-percent-line"></i></div>
+            </div>
+            <div class="kpi-value" id="kpiGM">0%</div>
+            <div class="kpi-sub" id="kpiGMgap">Gap: 0%</div>
+          </div>
+        </div>
+
+        <!-- CHARTS -->
+        <div class="grid grid-2" style="margin-bottom:20px">
+          <div class="card">
+            <div class="card-head">
+              <div class="ico ico-blue"><i class="ri-line-chart-line"></i></div>
+              <div><h3>Net Sales Trend</h3><p>Perbandingan bulan ini & sebelumnya</p></div>
+            </div>
+            <div class="card-body"><canvas id="chartNS" height="140"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <div class="ico ico-red"><i class="ri-pie-chart-line"></i></div>
+              <div><h3>Achievement Breakdown</h3><p>Distribusi pencapaian target</p></div>
+            </div>
+            <div class="card-body"><canvas id="chartAch" height="140"></canvas></div>
+          </div>
+        </div>
+
+        <div class="grid grid-3">
+          <div class="card">
+            <div class="card-head">
+              <div class="ico ico-green"><i class="ri-calendar-check-line"></i></div>
+              <div><h3>Sisa JHK</h3><p>Hari kerja tersisa</p></div>
+            </div>
+            <div class="card-body" style="text-align:center">
+              <div style="font-size:48px;font-weight:800;color:var(--primary);line-height:1" id="kpiSisaJHK">0</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:6px">dari <span id="kpiTotalJHK">0</span> hari</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <div class="ico ico-orange"><i class="ri-wallet-3-line"></i></div>
+              <div><h3>Tabungan Target</h3><p>Buffer / Hutang</p></div>
+            </div>
+            <div class="card-body" style="text-align:center">
+              <div style="font-size:28px;font-weight:800;line-height:1" id="kpiTabungan">Rp 0</div>
+              <div style="margin-top:8px" id="kpiTabunganChip"><span class="chip chip-info">Neutral</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <div class="ico ico-purple"><i class="ri-speed-line"></i></div>
+              <div><h3>SPD Aktual</h3><p>Sales per day berjalan</p></div>
+            </div>
+            <div class="card-body" style="text-align:center">
+              <div style="font-size:28px;font-weight:800;color:var(--primary);line-height:1" id="kpiSPD">Rp 0</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:6px">New Target: <span id="kpiNewTarget">Rp 0</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ INPUT ============ -->
+      <section class="page" id="page-input">
+        <div class="page-head">
+          <div>
+            <h2>Input Data Monitoring</h2>
+            <p>Isi data toko — semua perhitungan berjalan otomatis</p>
+          </div>
+          <div class="actions">
+            <button class="btn btn-secondary" onclick="loadSampleData()"><i class="ri-magic-line"></i>Sample Data</button>
+            <button class="btn btn-primary" onclick="generateReport()"><i class="ri-file-chart-line"></i>Generate Report</button>
+          </div>
+        </div>
+
+        <div class="grid grid-2" style="margin-bottom:20px">
+          <!-- Card 1: Informasi Toko -->
+          <div class="card">
+            <div class="card-head">
+              <div class="ico ico-blue"><i class="ri-store-2-line"></i></div>
+              <div><h3>Informasi Toko</h3><p>Data identitas toko</p></div>
+            </div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group full">
+                  <label class="form-label">Nama Toko</label>
+                  <input class="form-control" id="f_nama" placeholder="Contoh: Alfamart Sudirman 01">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Kode Toko</label>
+                  <input class="form-control" id="f_kode" placeholder="Contoh: 12345-A">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">SAT</label>
+                  <input class="form-control" id="f_sat" placeholder="Contoh: SAT 01">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Bulan</label>
+                  <select class="form-control" id="f_bulan">
+                    <option>Januari</option><option>Februari</option><option>Maret</option>
+                    <option>April</option><option>Mei</option><option selected>Juni</option>
+                    <option>Juli</option><option>Agustus</option><option>September</option>
+                    <option>Oktober</option><option>November</option><option>Desember</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Tahun</label>
+                  <input class="form-control" id="f_tahun" type="number" value="2026">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">JHK (Bulan Ini)</label>
+                  <input class="form-control" id="f_jhk" type="number" value="26" oninput="recalc()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">HK Berjalan</label>
+                  <input class="form-control" id="f_hk" type="number" value="14" oninput="recalc()">
+                </div>
+                <div class="form-group full">
+                  <label class="form-label">Sisa JHK</label>
+                  <input class="form-control" id="f_sisaJHK" readonly>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Net Sales -->
+          <div class="card">
+            <div class="card-head">
+              <div class="ico ico-green"><i class="ri-money-dollar-circle-line"></i></div>
+              <div><h3>Net Sales</h3><p>Data penjualan bersih</p></div>
+            </div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group full">
+                  <label class="form-label">Target NS Bulanan</label>
+                  <input class="form-control" id="f_targetNS" type="number" value="0" oninput="recalc()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Best Estimate</label>
+                  <input class="form-control" id="f_bestEst" type="number" value="0" oninput="recalc()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Actual NS Retail</label>
+                  <input class="form-control" id="f_actualNS" type="number" value="0" oninput="recalc()">
+                </div>
+                <div class="form-group full">
+                  <label class="form-label">Actual NS Seharusnya (Auto)</label>
+                  <input class="form-control" id="f_actualNSseharusnya" readonly>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-2" style="margin-bottom:20px">
+          <!-- Card 3: Target -->
+          <div class="card">
+            <div class="card-head">
+              <div class="ico ico-red"><i class="ri-target-line"></i></div>
+              <div><h3>Target</h3><p>Target harian & shift</p></div>
+            </div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group full">
+                  <label class="form-label">Target SPD (Input)</label>
+                  <input class="form-control" id="f_targetSPD" type="number" value="0" oninput="recalc()">
+                </div>
+                <div class="form-group full">
+                  <label class="form-label">New Target SPD (Auto)</label>
+                  <input class="form-control" id="f_newTargetSPD" readonly>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Target Shift 1</label>
+                  <input class="form-control" id="f_shift1" type="number" value="0" oninput="recalc()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Target Shift 2</label>
+                  <input class="form-control" id="f_shift2" type="number" value="0" oninput="recalc()">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 4: TF -->
+          <div class="card">
+            <div class="card-head">
+              <div class="ico ico-orange"><i class="ri-exchange-line"></i></div>
+              <div><h3>Transfer (TF)</h3><p>Data transfer stok</p></div>
+            </div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">TF Actual</label>
+                  <input class="form-control" id="f_tfActual" type="number" value="0" oninput="recalc()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">TF Seharusnya</label>
+                  <input class="form-control" id="f_tfShould" type="number" value="0" oninput="recalc()">
+                </div>
+                <div class="form-group full">
+                  <label class="form-label">Gap TF (Auto)</label>
+                  <input class="form-control" id="f_gapTF" readonly>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-2" style="margin-bottom:20px">
+          <!-- Card 5: Growth -->
+          <div class="card">
+            <div class="card-head">
+              <div class="ico ico-teal"><i class="ri-line-chart-line"></i></div>
+              <div><h3>Growth MoM</h3><p>Perbandingan bulan ke bulan</p></div>
+            </div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">NS Bulan Lalu (Juni)</label>
+                  <input class="form-control" id="f_nsPrev" type="number" value="0" oninput="recalc()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">NS Bulan Ini (Juli)</label>
+                  <input class="form-control" id="f_nsCurr" type="number" value="0" oninput="recalc()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Growth Rp (Auto)</label>
+                  <input class="form-control" id="f_growthRp" readonly>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Growth % (Auto)</label>
+                  <input class="form-control" id="f_growthPct" readonly>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 6: Gross Margin -->
+          <div class="card">
+            <div class="card-head">
+              <div class="ico ico-purple"><i class="ri-percent-line"></i></div>
+              <div><h3>Gross Margin</h3><p>Margin laba kotor</p></div>
+            </div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Target GM %</label>
+                  <input class="form-control" id="f_targetGMpct" type="number" step="0.01" value="0" oninput="recalc()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Actual GM %</label>
+                  <input class="form-control" id="f_actualGMpct" type="number" step="0.01" value="0" oninput="recalc()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Target GM Rp</label>
+                  <input class="form-control" id="f_targetGMrp" type="number" value="0" oninput="recalc()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Actual GM Rp</label>
+                  <input class="form-control" id="f_actualGMrp" type="number" value="0" oninput="recalc()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Gap GM % (Auto)</label>
+                  <input class="form-control" id="f_gapGMpct" readonly>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Gap GM Rp (Auto)</label>
+                  <input class="form-control" id="f_gapGMrp" readonly>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RESULT SUMMARY -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-head">
+            <div class="ico ico-green"><i class="ri-calculator-line"></i></div>
+            <div><h3>Hasil Perhitungan Otomatis</h3><p>Real-time calculation</p></div>
+          </div>
+          <div class="card-body">
+            <div class="grid grid-4" style="margin-bottom:14px">
+              <div style="padding:12px;background:var(--primary-light);border-radius:10px">
+                <div style="font-size:11px;color:var(--text-muted);font-weight:600">TARGET ACHIEVEMENT</div>
+                <div style="font-size:22px;font-weight:800;color:var(--primary);margin-top:4px" id="r_achievement">0%</div>
+              </div>
+              <div style="padding:12px;background:var(--success-light);border-radius:10px">
+                <div style="font-size:11px;color:var(--text-muted);font-weight:600">SHIFT 1 ACHIEVEMENT</div>
+                <div style="font-size:22px;font-weight:800;color:var(--success);margin-top:4px" id="r_shift1ach">0%</div>
+              </div>
+              <div style="padding:12px;background:var(--warning-light);border-radius:10px">
+                <div style="font-size:11px;color:var(--text-muted);font-weight:600">SHIFT 2 ACHIEVEMENT</div>
+                <div style="font-size:22px;font-weight:800;color:var(--warning);margin-top:4px" id="r_shift2ach">0%</div>
+              </div>
+              <div style="padding:12px;border-radius:10px;border:2px solid var(--border)" id="r_tabunganBox">
+                <div style="font-size:11px;color:var(--text-muted);font-weight:600" id="r_tabunganLabel">TABUNGAN TARGET</div>
+                <div style="font-size:22px;font-weight:800;margin-top:4px" id="r_tabungan">Rp 0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTION PLAN -->
+        <div class="card">
+          <div class="card-head">
+            <div class="ico ico-red"><i class="ri-lightbulb-flash-line"></i></div>
+            <div><h3>Smart Action Plan</h3><p>AI Rule-Based Recommendation</p></div>
+            <span class="chip chip-info" style="margin-left:auto">10 Rekomendasi</span>
+          </div>
+          <div class="card-body">
+            <div class="action-list" id="actionList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ REPORT ============ -->
+      <section class="page" id="page-report">
+        <div class="page-head">
+          <div>
+            <h2>Preview Laporan</h2>
+            <p>Dokumen profesional format A4</p>
+          </div>
+          <div class="actions">
+            <button class="btn btn-secondary" onclick="exportPNG()"><i class="ri-image-line"></i>PNG HD</button>
+            <button class="btn btn-secondary" onclick="exportWord()"><i class="ri-file-word-line"></i>Word</button>
+            <button class="btn btn-secondary" onclick="window.print()"><i class="ri-printer-line"></i>Print</button>
+            <button class="btn btn-primary" onclick="exportPDF()"><i class="ri-file-pdf-line"></i>Export PDF</button>
+          </div>
+        </div>
+        <div id="reportContainer"></div>
+      </section>
+
+      <!-- ============ HISTORY ============ -->
+      <section class="page" id="page-history">
+        <div class="page-head">
+          <div>
+            <h2>History Report</h2>
+            <p>Semua laporan tersimpan otomatis</p>
+          </div>
+          <div class="actions">
+            <button class="btn btn-danger btn-sm" onclick="clearHistory()"><i class="ri-delete-bin-line"></i>Clear All</button>
+          </div>
+        </div>
+        <div id="historyList"></div>
+      </section>
+
+      <!-- ============ SETTINGS ============ -->
+      <section class="page" id="page-settings">
+        <div class="page-head">
+          <div>
+            <h2>Settings</h2>
+            <p>Kustomisasi tampilan & data perusahaan</p>
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="card-head">
+              <div class="ico ico-blue"><i class="ri-palette-line"></i></div>
+              <div><h3>Tampilan</h3><p>Mode & preferensi visual</p></div>
+            </div>
+            <div class="card-body">
+              <div class="settings-section">
+                <h3><i class="ri-moon-line"></i>Dark Mode</h3>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0">
+                  <div>
+                    <div style="font-weight:600;font-size:13px">Tema Gelap</div>
+                    <div style="font-size:11.5px;color:var(--text-muted)">Aktifkan tampilan dark mode</div>
+                  </div>
+                  <div class="toggle-switch" id="toggleDark" onclick="toggleTheme()"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div class="ico ico-red"><i class="ri-user-settings-line"></i></div>
+              <div><h3>Profil Pembuat</h3><p>Data tanda tangan</p></div>
+            </div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group full">
+                  <label class="form-label">Nama Pembuat</label>
+                  <input class="form-control" id="s_nama" value="Brandon">
+                </div>
+                <div class="form-group full">
+                  <label class="form-label">Jabatan</label>
+                  <input class="form-control" id="s_jabatan" value="Chief Of Store">
+                </div>
+                <div class="form-group full">
+                  <label class="form-label">Footer Text</label>
+                  <input class="form-control" id="s_footer" value="Enterprise Monitoring System — Version 1.0 Enterprise">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div class="ico ico-orange"><i class="ri-image-add-line"></i></div>
+              <div><h3>Upload Logo</h3><p>Logo perusahaan (PNG transparan)</p></div>
+            </div>
+            <div class="card-body">
+              <div id="logoPreview" style="width:100px;height:100px;border:2px dashed var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;overflow:hidden;background:var(--surface-2)">
+                <i class="ri-image-line" style="font-size:32px;color:var(--text-soft)"></i>
+              </div>
+              <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="handleLogo(event)">
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('logoInput').click()"><i class="ri-upload-line"></i>Upload</button>
+                <button class="btn btn-ghost btn-sm" onclick="clearLogo()"><i class="ri-delete-bin-line"></i>Hapus</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div class="ico ico-green"><i class="ri-quill-pen-line"></i></div>
+              <div><h3>Upload Tanda Tangan</h3><p>TTD PNG transparan</p></div>
+            </div>
+            <div class="card-body">
+              <div id="ttdPreview" style="width:180px;height:80px;border:2px dashed var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;overflow:hidden;background:var(--surface-2)">
+                <i class="ri-quill-pen-line" style="font-size:32px;color:var(--text-soft)"></i>
+              </div>
+              <input type="file" id="ttdInput" accept="image/*" style="display:none" onchange="handleTTD(event)">
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ttdInput').click()"><i class="ri-upload-line"></i>Upload</button>
+                <button class="btn btn-ghost btn-sm" onclick="clearTTD()"><i class="ri-delete-bin-line"></i>Hapus</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;text-align:right">
+          <button class="btn btn-primary" onclick="saveSettings()"><i class="ri-save-line"></i>Simpan Settings</button>
+        </div>
+      </section>
+
+      <!-- ============ ABOUT ============ -->
+      <section class="page" id="page-about">
+        <div class="about-hero">
+          <div class="logo-big" id="aboutLogo">A</div>
+          <h2>Enterprise Monitoring Same Store</h2>
+          <p>Retail Performance Monitoring System — Version 1.0 Enterprise</p>
+        </div>
+
+        <div class="grid grid-3" style="margin-bottom:20px">
+          <div class="card" style="text-align:center;padding:28px">
+            <div style="width:60px;height:60px;margin:0 auto 14px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px"><i class="ri-user-star-line"></i></div>
+            <h3 style="font-size:15px;margin-bottom:4px">Developed By</h3>
+            <div style="font-size:20px;font-weight:800;color:var(--primary)">Brandon</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Chief Of Store</div>
+          </div>
+          <div class="card" style="text-align:center;padding:28px">
+            <div style="width:60px;height:60px;margin:0 auto 14px;border-radius:16px;background:linear-gradient(135deg,var(--secondary),#c8131a);display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px"><i class="ri-calendar-event-line"></i></div>
+            <h3 style="font-size:15px;margin-bottom:4px">Release</h3>
+            <div style="font-size:20px;font-weight:800;color:var(--secondary)">2026</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Enterprise Edition</div>
+          </div>
+          <div class="card" style="text-align:center;padding:28px">
+            <div style="width:60px;height:60px;margin:0 auto 14px;border-radius:16px;background:linear-gradient(135deg,var(--accent),#E68900);display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px"><i class="ri-code-s-slash-line"></i></div>
+            <h3 style="font-size:15px;margin-bottom:4px">Technology</h3>
+            <div style="font-size:14px;font-weight:700;color:var(--accent)">HTML • CSS • JS</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Pure Vanilla Stack</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div class="ico ico-blue"><i class="ri-stack-line"></i></div>
+            <div><h3>Fitur Unggulan</h3><p>Kemampuan sistem</p></div>
+          </div>
+          <div class="card-body">
+            <div class="grid grid-2">
+              <div style="display:flex;gap:10px;padding:10px;border-radius:8px;background:var(--surface-2)">
+                <i class="ri-check-double-line" style="color:var(--success);font-size:18px;margin-top:2px"></i>
+                <div><div style="font-weight:600;font-size:13px">Auto Calculation Real-time</div><div style="font-size:12px;color:var(--text-muted)">Semua perhitungan berjalan otomatis</div></div>
+              </div>
+              <div style="display:flex;gap:10px;padding:10px;border-radius:8px;background:var(--surface-2)">
+                <i class="ri-check-double-line" style="color:var(--success);font-size:18px;margin-top:2px"></i>
+                <div><div style="font-weight:600;font-size:13px">Smart Action Plan AI</div><div style="font-size:12px;color:var(--text-muted)">Rule-based recommendation</div></div>
+              </div>
+              <div style="display:flex;gap:10px;padding:10px;border-radius:8px;background:var(--surface-2)">
+                <i class="ri-check-double-line" style="color:var(--success);font-size:18px;margin-top:2px"></i>
+                <div><div style="font-weight:600;font-size:13px">Export Multi-Format</div><div style="font-size:12px;color:var(--text-muted)">PDF, PNG, Word, Print</div></div>
+              </div>
+              <div style="display:flex;gap:10px;padding:10px;border-radius:8px;background:var(--surface-2)">
+                <i class="ri-check-double-line" style="color:var(--success);font-size:18px;margin-top:2px"></i>
+                <div><div style="font-weight:600;font-size:13px">Professional A4 Report</div><div style="font-size:12px;color:var(--text-muted)">Layak cetak seperti Word</div></div>
+              </div>
+              <div style="display:flex;gap:10px;padding:10px;border-radius:8px;background:var(--surface-2)">
+                <i class="ri-check-double-line" style="color:var(--success);font-size:18px;margin-top:2px"></i>
+                <div><div style="font-weight:600;font-size:13px">Chart.js Integration</div><div style="font-size:12px;color:var(--text-muted)">Visualisasi data interaktif</div></div>
+              </div>
+              <div style="display:flex;gap:10px;padding:10px;border-radius:8px;background:var(--surface-2)">
+                <i class="ri-check-double-line" style="color:var(--success);font-size:18px;margin-top:2px"></i>
+                <div><div style="font-weight:600;font-size:13px">Local Storage Persistent</div><div style="font-size:12px;color:var(--text-muted)">Data tersimpan di browser</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="brand"><i class="ri-shield-star-line"></i><span id="footerText">Enterprise Monitoring System — Version 1.0 Enterprise</span></div>
+      <div>© 2026 Developed By <strong>Brandon</strong> — Chief Of Store</div>
+    </footer>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- MODAL -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Konfirmasi</h3>
+      <button class="icon-btn" onclick="closeModal()"><i class="ri-close-line"></i></button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   STATE & STORAGE
+========================================================= */
+const LS = {
+  DATA:'ems_current_data',
+  HISTORY:'ems_history',
+  SETTINGS:'ems_settings',
+  LOGO:'ems_logo',
+  TTD:'ems_ttd'
+};
+
+let state = {
+  data:{},
+  settings:{
+    nama:'Brandon',
+    jabatan:'Chief Of Store',
+    footer:'Enterprise Monitoring System — Version 1.0 Enterprise',
+    dark:false
+  },
+  logo:null,
+  ttd:null
+};
+
+let charts = {};
+
+/* =========================================================
+   UTILITIES
+========================================================= */
+const $ = id => document.getElementById(id);
+const fmtRp = n => {
+  if(isNaN(n)||n===null||n===undefined) n=0;
+  const neg = n<0;
+  const abs = Math.abs(Math.round(n));
+  const s = abs.toLocaleString('id-ID');
+  return (neg?'- ':'')+'Rp '+s;
+};
+const fmtPct = n => {
+  if(isNaN(n)||n===null||n===undefined) n=0;
+  return n.toFixed(2).replace('.',',')+'%';
+};
+const fmtDate = d => d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+const fmtDateTime = d => d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})+' • '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+const num = v => {const n=parseFloat(v);return isNaN(n)?0:n};
+
+function toast(msg,type='info'){
+  const t=document.createElement('div');
+  t.className='toast '+type;
+  const icons={success:'ri-check-line',error:'ri-close-circle-line',info:'ri-information-line'};
+  t.innerHTML=`<i class="${icons[type]}" style="font-size:18px"></i><span>${msg}</span>`;
+  $('toastContainer').appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(20px)';setTimeout(()=>t.remove(),300)},3000);
+}
+
+function openModal(title,body,actions){
+  $('modalTitle').textContent=title;
+  $('modalBody').innerHTML=body;
+  $('modalFoot').innerHTML=actions;
+  $('modal').classList.add('active');
+}
+function closeModal(){$('modal').classList.remove('active')}
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+function navigateTo(page){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const nav=document.querySelector(`.nav-item[data-page="${page}"]`);
+  if(nav) nav.classList.add('active');
+  const pg=$('page-'+page);
+  if(pg) pg.classList.add('active');
+  if(page==='history') renderHistory();
+  if(page==='report') renderReport();
+  if(window.innerWidth<=900) $('sidebar').classList.remove('open');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+document.querySelectorAll('.nav-item').forEach(n=>{
+  n.addEventListener('click',()=>navigateTo(n.dataset.page));
+});
+
+$('menuToggle').addEventListener('click',()=>$('sidebar').classList.toggle('open'));
+
+/* =========================================================
+   THEME
+========================================================= */
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme',state.settings.dark?'dark':'light');
+  const i=$('themeToggle').querySelector('i');
+  i.className=state.settings.dark?'ri-sun-line':'ri-moon-line';
+  const tg=$('toggleDark');
+  if(tg) tg.classList.toggle('active',state.settings.dark);
+  updateChartsTheme();
+}
+function toggleTheme(){
+  state.settings.dark=!state.settings.dark;
+  saveSettings(true);
+  applyTheme();
+}
+$('themeToggle').addEventListener('click',toggleTheme);
+
+/* =========================================================
+   CLOCK
+========================================================= */
+function updateClock(){
+  const now=new Date();
+  $('headerDate').textContent=fmtDate(now);
+  $('headerTime').textContent=now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateClock,1000);updateClock();
+
+/* =========================================================
+   CALCULATION ENGINE
+========================================================= */
+function recalc(){
+  const d = state.data = {
+    nama:$('f_nama').value,
+    kode:$('f_kode').value,
+    sat:$('f_sat').value,
+    bulan:$('f_bulan').value,
+    tahun:$('f_tahun').value,
+    jhk:num($('f_jhk').value),
+    hk:num($('f_hk').value),
+    targetNS:num($('f_targetNS').value),
+    bestEst:num($('f_bestEst').value),
+    actualNS:num($('f_actualNS').value),
+    targetSPD:num($('f_targetSPD').value),
+    shift1:num($('f_shift1').value),
+    shift2:num($('f_shift2').value),
+    tfActual:num($('f_tfActual').value),
+    tfShould:num($('f_tfShould').value),
+    nsPrev:num($('f_nsPrev').value),
+    nsCurr:num($('f_nsCurr').value),
+    targetGMpct:num($('f_targetGMpct').value),
+    actualGMpct:num($('f_actualGMpct').value),
+    targetGMrp:num($('f_targetGMrp').value),
+    actualGMrp:num($('f_actualGMrp').value),
+    updatedAt:new Date().toISOString()
+  };
+
+  // Sisa JHK
+  d.sisaJHK = Math.max(0,d.jhk - d.hk);
+  $('f_sisaJHK').value = d.sisaJHK + ' hari';
+
+  // New Target SPD = Target NS / JHK
+  d.newTargetSPD = d.jhk>0 ? d.targetNS/d.jhk : 0;
+  $('f_newTargetSPD').value = fmtRp(d.newTargetSPD);
+
+  // Actual NS Seharusnya = (Target NS / JHK) * HK
+  d.actualNSseharusnya = d.jhk>0 ? (d.targetNS/d.jhk)*d.hk : 0;
+  $('f_actualNSseharusnya').value = fmtRp(d.actualNSseharusnya);
+
+  // Gap TF
+  d.gapTF = d.tfActual - d.tfShould;
+  $('f_gapTF').value = fmtRp(d.gapTF);
+  $('f_gapTF').style.color = d.gapTF>=0?'var(--success)':'var(--danger)';
+
+  // Growth
+  d.growthRp = d.nsCurr - d.nsPrev;
+  d.growthPct = d.nsPrev>0 ? ((d.nsCurr-d.nsPrev)/d.nsPrev)*100 : 0;
+  $('f_growthRp').value = fmtRp(d.growthRp);
+  $('f_growthPct').value = fmtPct(d.growthPct);
+  $('f_growthRp').style.color = d.growthRp>=0?'var(--success)':'var(--danger)';
+  $('f_growthPct').style.color = d.growthPct>=0?'var(--success)':'var(--danger)';
+
+  // Gap GM
+  d.gapGMpct = d.actualGMpct - d.targetGMpct;
+  d.gapGMrp = d.actualGMrp - d.targetGMrp;
+  $('f_gapGMpct').value = fmtPct(d.gapGMpct);
+  $('f_gapGMrp').value = fmtRp(d.gapGMrp);
+  $('f_gapGMpct').style.color = d.gapGMpct>=0?'var(--success)':'var(--danger)';
+  $('f_gapGMrp').style.color = d.gapGMrp>=0?'var(--success)':'var(--danger)';
+
+  // Achievement
+  d.achievement = d.targetNS>0 ? (d.actualNS/d.targetNS)*100 : 0;
+  d.shift1Ach = d.shift1>0 ? (d.shift1/d.newTargetSPD)*100 : 0;
+  d.shift2Ach = d.shift2>0 ? (d.shift2/d.newTargetSPD)*100 : 0;
+
+  // Tabungan Target = Actual NS - Actual NS Seharusnya
+  d.tabungan = d.actualNS - d.actualNSseharusnya;
+
+  // SPD Aktual
+  d.spdAktual = d.hk>0 ? d.actualNS/d.hk : 0;
+
+  // Update result summary
+  $('r_achievement').textContent = fmtPct(d.achievement);
+  $('r_shift1ach').textContent = fmtPct(d.shift1Ach);
+  $('r_shift2ach').textContent = fmtPct(d.shift2Ach);
+  $('r_tabungan').textContent = fmtRp(Math.abs(d.tabungan));
+
+  const tBox = $('r_tabunganBox');
+  const tLabel = $('r_tabunganLabel');
+  if(d.tabungan>=0){
+    tBox.style.background='var(--success-light)';
+    tBox.style.borderColor='var(--success)';
+    $('r_tabungan').style.color='var(--success)';
+    tLabel.textContent='+ TABUNGAN TARGET';
+    $('r_tabungan').textContent = '+ '+fmtRp(d.tabungan);
+  } else {
+    tBox.style.background='var(--danger-light)';
+    tBox.style.borderColor='var(--danger)';
+    $('r_tabungan').style.color='var(--danger)';
+    tLabel.textContent='- HUTANG TARGET';
+    $('r_tabungan').textContent = '- '+fmtRp(Math.abs(d.tabungan));
+  }
+
+  // Dashboard KPI
+  $('kpiNS').textContent = fmtRp(d.actualNS);
+  $('kpiNSpct').textContent = fmtPct(d.achievement);
+  $('kpiNSpct').className = d.achievement>=100?'up':'down';
+  $('kpiAch').textContent = fmtPct(d.achievement);
+  $('kpiGrowth').textContent = fmtPct(d.growthPct);
+  $('kpiGrowthRp').textContent = fmtRp(d.growthRp);
+  $('kpiGM').textContent = fmtPct(d.actualGMpct);
+  $('kpiGMgap').textContent = 'Gap: '+fmtPct(d.gapGMpct);
+  $('kpiSisaJHK').textContent = d.sisaJHK;
+  $('kpiTotalJHK').textContent = d.jhk;
+  $('kpiTabungan').textContent = (d.tabungan>=0?'+ ':'- ')+fmtRp(Math.abs(d.tabungan));
+  $('kpiTabungan').style.color = d.tabungan>=0?'var(--success)':'var(--danger)';
+  const chip = d.tabungan>=0
+    ? '<span class="chip chip-success">+ Tabungan</span>'
+    : '<span class="chip chip-danger">- Hutang</span>';
+  $('kpiTabunganChip').innerHTML = chip;
+  $('kpiSPD').textContent = fmtRp(d.spdAktual);
+  $('kpiNewTarget').textContent = fmtRp(d.newTargetSPD);
+
+  updateCharts();
+  generateActionPlan(d);
+  saveData();
+}
+
+/* =========================================================
+   SMART ACTION PLAN (Rule-Based)
+========================================================= */
+function generateActionPlan(d){
+  const plans = [];
+  const issues = {
+    growthMinus: d.growthPct < 0,
+    gmMinus: d.gapGMpct < 0,
+    achLow: d.achievement < 100,
+    achHigh: d.achievement > 105,
+    tabunganMinus: d.tabungan < 0,
+    tabunganPlus: d.tabungan > 0,
+    tfMinus: d.gapTF < 0,
+    spdLow: d.spdAktual < d.newTargetSPD
+  };
+
+  // Priority rules
+  if(issues.growthMinus){
+    plans.push({title:'Recovery Sales Agresif',desc:`Growth MoM minus ${fmtPct(Math.abs(d.growthPct))}. Fokus pada program promo, bundling produk fast-moving, dan aktivasi display end-cap untuk mendorong traffic pelanggan.`,tag:'Recovery Sales',priority:'HIGH'});
+    plans.push({title:'Optimasi Product Availability',desc:'Pastikan OSA (On-Shelf Availability) di atas 96%. Lakukan restock harian untuk produk top 50 SKU dan minimalkan out-of-stock pada jam sibuk.',tag:'Recovery Sales',priority:'HIGH'});
+  }
+  if(issues.gmMinus){
+    plans.push({title:'Fokus High Margin Product',desc:`GM minus ${fmtPct(Math.abs(d.gapGMpct))}. Dorong penjualan produk private label & kategori fresh food yang memiliki margin tinggi. Briefing tim setiap shift.`,tag:'High Margin',priority:'HIGH'});
+    plans.push({title:'Kontrol Diskon & Promo',desc:'Review efektivitas promo berjalan. Batasi diskon non-strategis dan arahkan upselling ke produk dengan margin minimal 15%.',tag:'High Margin',priority:'MEDIUM'});
+  }
+  if(issues.achLow){
+    plans.push({title:'Closing Gap Achievement',desc:`Achievement ${fmtPct(d.achievement)} di bawah target 100%. Buat target harian breakdown untuk setiap shift dan monitoring real-time via huddle pagi.`,tag:'Recovery',priority:'HIGH'});
+    plans.push({title:'Motivasi Tim & Incentive',desc:'Lakukan daily briefing dengan target shift yang jelas. Berikan reward harian untuk shift dengan pencapaian terbaik untuk meningkatkan engagement.',tag:'Recovery',priority:'MEDIUM'});
+  }
+  if(issues.achHigh){
+    plans.push({title:'Maintain Performance Level',desc:`Achievement ${fmtPct(d.achievement)} di atas 105%. Pertahankan momentum dengan standardisasi best practice dan dokumentasi SOP yang berhasil.`,tag:'Maintain',priority:'MEDIUM'});
+    plans.push({title:'Knowledge Sharing',desc:'Bagikan strategi sukses ke tim dan store lain. Dokumentasikan winning play untuk replikasi di periode berikutnya.',tag:'Maintain',priority:'LOW'});
+  }
+  if(issues.tabunganMinus){
+    plans.push({title:'Closing Gap Target Bulanan',desc:`Terdapat hutang target ${fmtRp(Math.abs(d.tabungan))}. Hitung rata-rata SPD yang dibutuhkan untuk sisa hari kerja dan set target harian agresif.`,tag:'Closing Gap',priority:'HIGH'});
+    plans.push({title:'Ekstra Shift & Extended Hour',desc:'Evaluasi kebutuhan tambahan jam operasional atau ekstra staff pada peak hour untuk memaksimalkan penjualan di sisa hari kerja.`,tag:'Closing Gap',priority:'MEDIUM'});
+  }
+  if(issues.tabunganPlus){
+    plans.push({title:'Jaga Buffer Target',desc:`Tabungan target ${fmtRp(d.tabungan)}. Jangan turunkan effort, pertahankan SPD minimal sama untuk mengantisipasi fluktuasi.`,tag:'Buffer',priority:'MEDIUM'});
+  }
+  if(issues.tfMinus){
+    plans.push({title:'Perbaikan Transfer Stok',desc:`Gap TF minus ${fmtRp(Math.abs(d.gapTF))}. Koordinasi dengan warehouse untuk percepatan TF dan prioritaskan kategori high-demand.`,tag:'Operational',priority:'MEDIUM'});
+  }
+  if(issues.spdLow){
+    plans.push({title:'Peningkatan Sales Per Day',desc:`SPD aktual ${fmtRp(d.spdAktual)} di bawah new target ${fmtRp(d.newTargetSPD)}. Review display, planogram, dan execution promo harian.`,tag:'Operational',priority:'HIGH'});
+  }
+
+  // Fill to 10 plans with generic best practices
+  const genericPlans = [
+    {title:'Daily Huddle & Briefing',desc:'Lakukan huddle 10 menit di awal shift untuk review target, sharing info promo, dan alignment tim.',tag:'Operational Excellence',priority:'MEDIUM'},
+    {title:'Customer Engagement Program',desc:'Aktifkan sapaan 3M (Mengucapkan salam, Menyapa, Membantu) untuk meningkatkan conversion rate dan customer satisfaction.',tag:'Customer Experience',priority:'MEDIUM'},
+    {title:'Store Cleanliness & Ambiance',desc:'Pastikan standar kebersihan, pencahayaan, dan suhu toko optimal. Store yang nyaman meningkatkan dwell time pelanggan.',tag:'Store Standard',priority:'LOW'},
+    {title:'Competitor Monitoring',desc:'Pantau aktivitas promo kompetitor dalam radius 1km. Siapkan counter-promo strategis jika diperlukan.',tag:'Market Intelligence',priority:'MEDIUM'},
+    {title:'Shrinkage Control',desc:'Perhatikan inventory accuracy dan loss prevention. Lakukan cycle count rutin untuk kategori high-value.',tag:'Operational',priority:'MEDIUM'},
+    {title:'Digital Channel Optimization',desc:'Manfaatkan Alfagift & digital channel untuk drive omnichannel sales. Pastikan produk promo tersedia online.',tag:'Digital',priority:'LOW'}
+  ];
+  let i=0;
+  while(plans.length<10 && i<genericPlans.length){
+    if(!plans.find(p=>p.title===genericPlans[i].title)) plans.push(genericPlans[i]);
+    i++;
+  }
+
+  const html = plans.slice(0,10).map((p,i)=>`
+    <div class="action-item">
+      <div class="action-num">${i+1}</div>
+      <div class="action-content">
+        <div class="action-title">${p.title} <span class="chip chip-${p.priority==='HIGH'?'danger':p.priority==='MEDIUM'?'warning':'info'}" style="margin-left:6px;font-size:9px">${p.priority}</span></div>
+        <div class="action-desc">${p.desc}</div>
+        <span class="action-tag">${p.tag}</span>
+      </div>
+    </div>
+  `).join('');
+  $('actionList').innerHTML = html;
+}
+
+/* =========================================================
+   CHARTS
+========================================================= */
+function getChartColors(){
+  const dark = state.settings.dark;
+  return {
+    grid: dark?'rgba(255,255,255,.06)':'rgba(15,23,42,.06)',
+    text: dark?'#94A3B8':'#64748B'
+  };
+}
+function updateChartsTheme(){
+  if(charts.ns) {charts.ns.destroy();charts.ns=null}
+  if(charts.ach) {charts.ach.destroy();charts.ach=null}
+  updateCharts();
+}
+function updateCharts(){
+  const d = state.data;
+  const c = getChartColors();
+
+  // NS Chart
+  if(charts.ns) charts.ns.destroy();
+  const ctx1 = $('chartNS').getContext('2d');
+  const gradient1 = ctx1.createLinearGradient(0,0,0,200);
+  gradient1.addColorStop(0,'rgba(0,91,172,.3)');
+  gradient1.addColorStop(1,'rgba(0,91,172,0)');
+  charts.ns = new Chart(ctx1,{
+    type:'line',
+    data:{
+      labels:['Bulan Lalu','Target','Actual','Best Est'],
+      datasets:[{
+        label:'Net Sales',
+        data:[d.nsPrev||0,d.targetNS||0,d.actualNS||0,d.bestEst||0],
+        borderColor:'#005BAC',
+        backgroundColor:gradient1,
+        fill:true,tension:.4,borderWidth:3,
+        pointBackgroundColor:'#005BAC',pointRadius:5,pointHoverRadius:7
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{
+        backgroundColor:'#0F172A',padding:12,cornerRadius:8,
+        callbacks:{label:ctx=>fmtRp(ctx.parsed.y)}
+      }},
+      scales:{
+        x:{grid:{display:false},ticks:{color:c.text,font:{size:11,weight:'500'}}},
+        y:{grid:{color:c.grid},ticks:{color:c.text,font:{size:11},callback:v=>fmtRp(v)}}
+      }
+    }
+  });
+
+  // Achievement Chart
+  if(charts.ach) charts.ach.destroy();
+  charts.ach = new Chart($('chartAch'),{
+    type:'doughnut',
+    data:{
+      labels:['Achieved','Remaining'],
+      datasets:[{
+        data:[Math.min(d.achievement||0,100),Math.max(0,100-(d.achievement||0))],
+        backgroundColor:['#005BAC','#E5E9F0'],
+        borderWidth:0
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'72%',
+      plugins:{
+        legend:{position:'bottom',labels:{color:c.text,font:{size:11,weight:'500'},padding:12,usePointStyle:true}},
+        tooltip:{backgroundColor:'#0F172A',padding:12,cornerRadius:8,callbacks:{label:ctx=>ctx.label+': '+ctx.parsed.toFixed(1)+'%'}}
+      }
+    }
+  });
+}
+
+/* =========================================================
+   REPORT GENERATION
+========================================================= */
+function renderReport(){
+  const d = state.data;
+  if(!d || !d.nama){
+    $('reportContainer').innerHTML = `
+      <div class="card" style="padding:40px;text-align:center">
+        <i class="ri-file-warning-line" style="font-size:48px;color:var(--text-soft)"></i>
+        <h3 style="margin-top:12px">Belum Ada Data</h3>
+        <p style="color:var(--text-muted);margin:8px 0 16px">Silakan input data terlebih dahulu</p>
+        <button class="btn btn-primary" onclick="navigateTo('input')"><i class="ri-edit-box-line"></i>Input Data</button>
+      </div>`;
+    return;
+  }
+
+  const logoHtml = state.logo
+    ? `<img src="${state.logo}" alt="Logo">`
+    : `<div style="font-weight:800;color:#fff;font-size:22px">A</div>`;
+
+  const ttdHtml = state.ttd
+    ? `<img src="${state.ttd}" alt="TTD">`
+    : `<div style="font-style:italic;color:#94A3B8;font-size:10pt">Digital Signature</div>`;
+
+  const now = new Date();
+
+  $('reportContainer').innerHTML = `
+    <div class="report-preview" id="reportA4">
+      <!-- HEADER -->
+      <div class="rp-header">
+        <div class="rp-logo">${logoHtml}</div>
+        <div class="rp-header-info">
+          <div class="sat">${d.sat||'SAT'}</div>
+          <h1>LAPORAN MONITORING SAME STORE</h1>
+          <p>Pencapaian IK&T & Net Sales (MoM) — ${d.nama||'Nama Toko'}</p>
+        </div>
+      </div>
+
+      <div class="rp-meta">
+        <div><strong>Kode Toko:</strong> ${d.kode||'-'}</div>
+        <div><strong>Periode:</strong> ${d.bulan||'-'} ${d.tahun||'-'}</div>
+        <div><strong>Tanggal:</strong> ${fmtDateTime(now)}</div>
+      </div>
+
+      <!-- 1. MONITORING NET SALES -->
+      <div class="rp-section">
+        <h2>1. Monitoring Net Sales</h2>
+        <table class="rp-table">
+          <thead><tr><th>Indikator</th><th class="num">Nilai</th><th>Keterangan</th></tr></thead>
+          <tbody>
+            <tr><td>Target NS Bulanan</td><td class="num">${fmtRp(d.targetNS)}</td><td>Target awal periode</td></tr>
+            <tr><td>Best Estimate</td><td class="num">${fmtRp(d.bestEst)}</td><td>Estimasi akhir periode</td></tr>
+            <tr><td>Actual NS Retail</td><td class="num">${fmtRp(d.actualNS)}</td><td>Realisasi sampai dengan HK-${d.hk}</td></tr>
+            <tr><td>Actual NS Seharusnya</td><td class="num">${fmtRp(d.actualNSseharusnya)}</td><td>Progres proporsional</td></tr>
+            <tr class="total"><td>Selisih vs Seharusnya</td><td class="num" style="color:${d.tabungan>=0?'#16A34A':'#DC2626'}">${fmtRp(d.tabungan)}</td><td>${d.tabungan>=0?'Tabungan Target':'Hutang Target'}</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 2. PENCAPAIAN NET SALES -->
+      <div class="rp-section">
+        <h2>2. Pencapaian Net Sales</h2>
+        <table class="rp-table">
+          <thead><tr><th>Parameter</th><th class="num">Target</th><th class="num">Actual</th><th class="num">Achievement</th></tr></thead>
+          <tbody>
+            <tr><td>Overall Achievement</td><td class="num">100%</td><td class="num">${fmtRp(d.actualNS)}</td><td class="num" style="font-weight:700;color:${d.achievement>=100?'#16A34A':'#DC2626'}">${fmtPct(d.achievement)}</td></tr>
+            <tr><td>Target 105%</td><td class="num">${fmtRp(d.targetNS*1.05)}</td><td class="num">${fmtRp(d.actualNS)}</td><td class="num">${d.achievement>=105?'✓ TERCAPAI':'✗ BELUM'}</td></tr>
+            <tr><td>SPD Aktual</td><td class="num">${fmtRp(d.newTargetSPD)}</td><td class="num">${fmtRp(d.spdAktual)}</td><td class="num">${fmtPct(d.newTargetSPD>0?(d.spdAktual/d.newTargetSPD)*100:0)}</td></tr>
+          </tbody>
+        </table>
+        <div class="rp-chart"><canvas id="rpChartAch" height="180"></canvas></div>
+      </div>
+
+      <!-- 3. MONITORING GROWTH -->
+      <div class="rp-section">
+        <h2>3. Monitoring Growth (MoM)</h2>
+        <table class="rp-table">
+          <thead><tr><th>Periode</th><th class="num">Net Sales</th><th class="num">Growth</th></tr></thead>
+          <tbody>
+            <tr><td>${getPrevMonth(d.bulan)} ${d.tahun}</td><td class="num">${fmtRp(d.nsPrev)}</td><td class="num">—</td></tr>
+            <tr><td>${d.bulan} ${d.tahun}</td><td class="num">${fmtRp(d.nsCurr)}</td><td class="num" style="color:${d.growthPct>=0?'#16A34A':'#DC2626'};font-weight:700">${fmtPct(d.growthPct)}</td></tr>
+            <tr class="total"><td>Selisih (Growth Rp)</td><td class="num" colspan="2" style="color:${d.growthRp>=0?'#16A34A':'#DC2626'}">${fmtRp(d.growthRp)}</td></tr>
+          </tbody>
+        </table>
+        <div class="rp-chart"><canvas id="rpChartGrowth" height="180"></canvas></div>
+      </div>
+
+      <!-- 4. GROSS MARGIN -->
+      <div class="rp-section">
+        <h2>4. Gross Margin</h2>
+        <table class="rp-table">
+          <thead><tr><th>Indikator</th><th class="num">Target</th><th class="num">Actual</th><th class="num">Gap</th></tr></thead>
+          <tbody>
+            <tr><td>Gross Margin (%)</td><td class="num">${fmtPct(d.targetGMpct)}</td><td class="num">${fmtPct(d.actualGMpct)}</td><td class="num" style="color:${d.gapGMpct>=0?'#16A34A':'#DC2626'}">${fmtPct(d.gapGMpct)}</td></tr>
+            <tr><td>Gross Margin (Rp)</td><td class="num">${fmtRp(d.targetGMrp)}</td><td class="num">${fmtRp(d.actualGMrp)}</td><td class="num" style="color:${d.gapGMrp>=0?'#16A34A':'#DC2626'}">${fmtRp(d.gapGMrp)}</td></tr>
+          </tbody>
+        </table>
+        <div class="rp-chart"><canvas id="rpChartGM" height="180"></canvas></div>
+      </div>
+
+      <!-- 5. REKAP TARGET -->
+      <div class="rp-section">
+        <h2>5. Rekap Target</h2>
+        <table class="rp-table">
+          <thead><tr><th>Item</th><th class="num">Nilai</th></tr></thead>
+          <tbody>
+            <tr><td>JHK Bulan Ini</td><td class="num">${d.jhk} hari</td></tr>
+            <tr><td>HK Berjalan</td><td class="num">${d.hk} hari</td></tr>
+            <tr><td>Sisa JHK</td><td class="num">${d.sisaJHK} hari</td></tr>
+            <tr><td>Target SPD (Input)</td><td class="num">${fmtRp(d.targetSPD)}</td></tr>
+            <tr><td>New Target SPD</td><td class="num">${fmtRp(d.newTargetSPD)}</td></tr>
+            <tr><td>Target Shift 1</td><td class="num">${fmtRp(d.shift1)} <span style="color:#64748B;font-size:8pt">(${fmtPct(d.shift1Ach)})</span></td></tr>
+            <tr><td>Target Shift 2</td><td class="num">${fmtRp(d.shift2)} <span style="color:#64748B;font-size:8pt">(${fmtPct(d.shift2Ach)})</span></td></tr>
+            <tr><td>TF Actual</td><td class="num">${fmtRp(d.tfActual)}</td></tr>
+            <tr><td>TF Seharusnya</td><td class="num">${fmtRp(d.tfShould)}</td></tr>
+            <tr class="total"><td>Gap TF</td><td class="num" style="color:${d.gapTF>=0?'#16A34A':'#DC2626'}">${fmtRp(d.gapTF)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 6. ACTION PLAN -->
+      <div class="rp-section">
+        <h2>6. Action Plan</h2>
+        ${generateActionPlanHTML(d)}
+      </div>
+
+      <!-- NOTES -->
+      <div class="rp-notes">
+        <strong>Catatan:</strong><br>
+        • NS = Net Sales (Penjualan Bersih)<br>
+        • SPD = Sales Per Day (Penjualan per Hari)<br>
+        • JHK = Hari Kerja<br>
+        • HK = Hari Kerja Berjalan<br>
+        • TF = Transfer Stok<br>
+        • GM = Gross Margin (Laba Kotor)<br>
+        • MoM = Month over Month (Bulan ke Bulan)
+      </div>
+
+      <!-- SIGNATURE -->
+      <div class="rp-sign">
+        <div class="rp-sign-box">
+          <div class="place">${d.sat||'SAT'}, ${fmtDate(now)}</div>
+          <div style="font-size:9.5pt;margin-bottom:4px">Hormat kami,</div>
+          <div class="sig-img">${ttdHtml}</div>
+          <div class="name">${state.settings.nama||'Brandon'}</div>
+          <div class="role">${state.settings.jabatan||'Chief Of Store'}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Render charts in report
+  setTimeout(()=>renderReportCharts(d),100);
+}
+
+function getPrevMonth(bulan){
+  const months=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const i=months.indexOf(bulan);
+  return i>0?months[i-1]:'Desember';
+}
+
+function generateActionPlanHTML(d){
+  const plans = [];
+  if(d.growthPct<0) plans.push({title:'Recovery Sales Agresif',desc:`Growth MoM minus ${fmtPct(Math.abs(d.growthPct))}. Fokus pada program promo, bundling produk fast-moving, dan aktivasi display end-cap.`});
+  if(d.gapGMpct<0) plans.push({title:'Fokus High Margin Product',desc:`GM minus ${fmtPct(Math.abs(d.gapGMpct))}. Dorong penjualan produk private label & kategori fresh food.`});
+  if(d.achievement<100) plans.push({title:'Closing Gap Achievement',desc:`Achievement ${fmtPct(d.achievement)} di bawah target 100%. Target harian breakdown per shift.`});
+  if(d.achievement>105) plans.push({title:'Maintain Performance',desc:`Achievement ${fmtPct(d.achievement)} di atas 105%. Pertahankan momentum & dokumentasi best practice.`});
+  if(d.tabungan<0) plans.push({title:'Closing Gap Target Bulanan',desc:`Hutang target ${fmtRp(Math.abs(d.tabungan))}. Hitung SPD yang dibutuhkan untuk sisa hari.`});
+  if(d.tabungan>0) plans.push({title:'Jaga Buffer Target',desc:`Tabungan target ${fmtRp(d.tabungan)}. Pertahankan SPD minimal sama.`});
+  if(d.gapTF<0) plans.push({title:'Perbaikan Transfer Stok',desc:`Gap TF minus ${fmtRp(Math.abs(d.gapTF))}. Koordinasi percepatan TF dengan warehouse.`});
+  if(d.spdAktual<d.newTargetSPD) plans.push({title:'Peningkatan Sales Per Day',desc:`SPD aktual ${fmtRp(d.spdAktual)} di bawah target ${fmtRp(d.newTargetSPD)}.`});
+
+  const generic = [
+    {title:'Daily Huddle & Briefing',desc:'Huddle 10 menit di awal shift untuk review target dan alignment tim.'},
+    {title:'Customer Engagement Program',desc:'Aktifkan sapaan 3M untuk meningkatkan conversion rate.'},
+    {title:'Store Cleanliness & Ambiance',desc:'Standar kebersihan, pencahayaan, dan suhu toko optimal.'},
+    {title:'Competitor Monitoring',desc:'Pantau aktivitas promo kompetitor radius 1km.'}
+  ];
+  let i=0;
+  while(plans.length<10 && i<generic.length){
+    if(!plans.find(p=>p.title===generic[i].title)) plans.push(generic[i]);
+    i++;
+  }
+
+  return plans.slice(0,10).map((p,i)=>`
+    <div class="rp-action">
+      <strong>${i+1}. ${p.title}</strong><br>
+      ${p.desc}
+    </div>
+  `).join('');
+}
+
+function renderReportCharts(d){
+  // Achievement bar
+  const c1 = $('rpChartAch');
+  if(c1){
+    new Chart(c1,{
+      type:'bar',
+      data:{
+        labels:['Overall','Shift 1','Shift 2','Target 105%'],
+        datasets:[{
+          label:'Achievement %',
+          data:[d.achievement,d.shift1Ach,d.shift2Ach,105],
+          backgroundColor:['#005BAC','#ED1C24','#F9A825','#CBD5E1'],
+          borderRadius:6
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},title:{display:true,text:'Achievement Breakdown (%)',font:{size:12,weight:'700'},color:'#005BAC'}},
+        scales:{y:{beginAtZero:true,max:150,ticks:{callback:v=>v+'%'}}}
+      }
+    });
+  }
+  // Growth
+  const c2 = $('rpChartGrowth');
+  if(c2){
+    new Chart(c2,{
+      type:'bar',
+      data:{
+        labels:[getPrevMonth(d.bulan),d.bulan],
+        datasets:[{
+          label:'Net Sales',
+          data:[d.nsPrev,d.nsCurr],
+          backgroundColor:['#CBD5E1','#005BAC'],
+          borderRadius:6
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},title:{display:true,text:'Growth MoM Comparison',font:{size:12,weight:'700'},color:'#005BAC'}},
+        scales:{y:{ticks:{callback:v=>fmtRp(v)}}}
+      }
+    });
+  }
+  // GM
+  const c3 = $('rpChartGM');
+  if(c3){
+    new Chart(c3,{
+      type:'bar',
+      data:{
+        labels:['Target GM %','Actual GM %'],
+        datasets:[{
+          label:'GM %',
+          data:[d.targetGMpct,d.actualGMpct],
+          backgroundColor:['#CBD5E1','#16A34A'],
+          borderRadius:6
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},title:{display:true,text:'Gross Margin %',font:{size:12,weight:'700'},color:'#005BAC'}},
+        scales:{y:{ticks:{callback:v=>v+'%'}}}
+      }
+    });
+  }
+}
+
+/* =========================================================
+   EXPORT FUNCTIONS
+========================================================= */
+async function exportPDF(){
+  if(!$('reportA4')){toast('Generate report terlebih dahulu','error');return}
+  toast('Generating PDF...','info');
+  try{
+    const el = $('reportA4');
+    const canvas = await html2canvas(el,{scale:3,useCORS:true,backgroundColor:'#ffffff',windowWidth:el.scrollWidth});
+    const imgData = canvas.toDataURL('image/png',1.0);
+    const {jsPDF} = window.jspdf;
+    const pdf = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const pdfW = 210, pdfH = 297;
+    const imgW = pdfW;
+    const imgH = (canvas.height*pdfW)/canvas.width;
+    let heightLeft = imgH;
+    let position = 0;
+    pdf.addImage(imgData,'PNG',0,position,imgW,imgH);
+    heightLeft -= pdfH;
+    while(heightLeft>0){
+      position = heightLeft - imgH;
+      pdf.addPage();
+      pdf.addImage(imgData,'PNG',0,position,imgW,imgH);
+      heightLeft -= pdfH;
+    }
+    const fname = `Laporan_${state.data.kode||'SameStore'}_${state.data.bulan||''}_${state.data.tahun||''}.pdf`;
+    pdf.save(fname);
+    toast('PDF berhasil di-export','success');
+  }catch(e){console.error(e);toast('Gagal export PDF','error')}
+}
+
+async function exportPNG(){
+  if(!$('reportA4')){toast('Generate report terlebih dahulu','error');return}
+  toast('Generating PNG HD...','info');
+  try{
+    const el = $('reportA4');
+    const canvas = await html2canvas(el,{scale:4,useCORS:true,backgroundColor:'#ffffff'});
+    canvas.toBlob(blob=>{
+      saveAs(blob,`Laporan_${state.data.kode||'SameStore'}_${Date.now()}.png`);
+      toast('PNG HD berhasil di-export','success');
+    },'image/png',1.0);
+  }catch(e){toast('Gagal export PNG','error')}
+}
+
+async function exportWord(){
+  if(!state.data || !state.data.nama){toast('Input data terlebih dahulu','error');return}
+  toast('Generating Word...','info');
+  try{
+    const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,AlignmentType,BorderStyle,HeadingLevel,ShadingType} = docx;
+    const d = state.data;
+
+    const borderStyle = {style:BorderStyle.SINGLE,size:1,color:'CBD5E1'};
+    const borders = {top:borderStyle,bottom:borderStyle,left:borderStyle,right:borderStyle};
+
+    const headerCell = (text) => new TableCell({
+      borders,shading:{fill:'005BAC',type:ShadingType.CLEAR},
+      children:[new Paragraph({children:[new TextRun({text,bold:true,color:'FFFFFF',size:20,font:'Inter'})]})]
+    });
+    const dataCell = (text,align=AlignmentType.LEFT) => new TableCell({
+      borders,
+      children:[new Paragraph({alignment:align,children:[new TextRun({text:String(text),size:20,font:'Inter'})]})]
+    });
+
+    const rows = [
+      ['Target NS Bulanan',fmtRp(d.targetNS),'Target awal periode'],
+      ['Best Estimate',fmtRp(d.bestEst),'Estimasi akhir periode'],
+      ['Actual NS Retail',fmtRp(d.actualNS),'Realisasi sampai HK-'+d.hk],
+      ['Actual NS Seharusnya',fmtRp(d.actualNSseharusnya),'Progres proporsional'],
+      ['Selisih',fmtRp(d.tabungan),d.tabungan>=0?'Tabungan Target':'Hutang Target']
+    ];
+
+    const doc = new Document({
+      sections:[{
+        properties:{page:{size:{width:11906,height:16838}}},
+        children:[
+          new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:'LAPORAN MONITORING SAME STORE',bold:true,size:32,font:'Inter',color:'005BAC'})]}),
+          new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:200},children:[new TextRun({text:`${d.nama} — ${d.bulan} ${d.tahun}`,size:22,font:'Inter'})]}),
+          new Paragraph({heading:HeadingLevel.HEADING_1,children:[new TextRun({text:'1. Monitoring Net Sales',bold:true,size:24,color:'005BAC'})]}),
+          new Table({
+            width:{size:100,type:WidthType.PERCENTAGE},
+            rows:[
+              new TableRow({children:[headerCell('Indikator'),headerCell('Nilai'),headerCell('Keterangan')]}),
+              ...rows.map(r=>new TableRow({children:[dataCell(r[0]),dataCell(r[1],AlignmentType.RIGHT),dataCell(r[2])]}))
+            ]
+          }),
+          new Paragraph({spacing:{before:200},heading:HeadingLevel.HEADING_1,children:[new TextRun({text:'2. Pencapaian',bold:true,size:24,color:'005BAC'})]}),
+          new Paragraph({children:[new TextRun({text:`Achievement: ${fmtPct(d.achievement)} | Growth: ${fmtPct(d.growthPct)} | GM Gap: ${fmtPct(d.gapGMpct)}`,size:20})]}),
+          new Paragraph({spacing:{before:200},children:[new TextRun({text:'Dibuat oleh:',bold:true,size:20})]}),
+          new Paragraph({children:[new TextRun({text:`${state.settings.nama} — ${state.settings.jabatan}`,size:20})]})
+        ]
+      }]
+    });
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob,`Laporan_${d.kode||'SameStore'}_${d.bulan}_${d.tahun}.docx`);
+    toast('Word berhasil di-export','success');
+  }catch(e){console.error(e);toast('Gagal export Word','error')}
+}
+
+/* =========================================================
+   HISTORY
+========================================================= */
+function saveData(){
+  try{
+    localStorage.setItem(LS.DATA,JSON.stringify(state.data));
+  }catch(e){}
+}
+function saveToHistory(){
+  const history = JSON.parse(localStorage.getItem(LS.HISTORY)||'[]');
+  const entry = {
+    id:Date.now(),
+    data:{...state.data},
+    createdAt:new Date().toISOString()
+  };
+  history.unshift(entry);
+  if(history.length>50) history.pop();
+  localStorage.setItem(LS.HISTORY,JSON.stringify(history));
+  updateHistoryBadge();
+}
+function updateHistoryBadge(){
+  const h = JSON.parse(localStorage.getItem(LS.HISTORY)||'[]');
+  $('historyBadge').textContent = h.length;
+}
+function renderHistory(){
+  const h = JSON.parse(localStorage.getItem(LS.HISTORY)||'[]');
+  if(h.length===0){
+    $('historyList').innerHTML = `
+      <div class="card" style="padding:40px;text-align:center">
+        <i class="ri-history-line" style="font-size:48px;color:var(--text-soft)"></i>
+        <h3 style="margin-top:12px">Belum Ada History</h3>
+        <p style="color:var(--text-muted);margin-top:4px">Laporan yang sudah di-generate akan muncul di sini</p>
+      </div>`;
+    return;
+  }
+  $('historyList').innerHTML = h.map(e=>`
+    <div class="history-item">
+      <div class="history-icon"><i class="ri-file-chart-line"></i></div>
+      <div class="history-info">
+        <div class="h-title">${e.data.nama||'Tanpa Nama'} <span class="chip chip-info">${e.data.bulan||''} ${e.data.tahun||''}</span></div>
+        <div class="h-meta">
+          <span><i class="ri-code-s-slash-line"></i> ${e.data.kode||'-'}</span>
+          <span><i class="ri-money-dollar-circle-line"></i> ${fmtRp(e.data.actualNS||0)}</span>
+          <span><i class="ri-time-line"></i> ${fmtDateTime(new Date(e.createdAt))}</span>
+        </div>
+      </div>
+      <div class="history-actions">
+        <button class="btn btn-secondary btn-sm" onclick="loadHistory(${e.id})"><i class="ri-eye-line"></i>Load</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteHistory(${e.id})"><i class="ri-delete-bin-line"></i></button>
+      </div>
+    </div>
+  `).join('');
+}
+function loadHistory(id){
+  const h = JSON.parse(localStorage.getItem(LS.HISTORY)||'[]');
+  const e = h.find(x=>x.id===id);
+  if(!e) return;
+  state.data = e.data;
+  populateForm(e.data);
+  recalc();
+  toast('Data berhasil dimuat','success');
+  navigateTo('input');
+}
+function deleteHistory(id){
+  openModal('Hapus Laporan','<p>Yakin ingin menghapus laporan ini?</p>',
+    `<button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+     <button class="btn btn-danger" onclick="confirmDeleteHistory(${id})">Hapus</button>`);
+}
+function confirmDeleteHistory(id){
+  let h = JSON.parse(localStorage.getItem(LS.HISTORY)||'[]');
+  h = h.filter(x=>x.id!==id);
+  localStorage.setItem(LS.HISTORY,JSON.stringify(h));
+  updateHistoryBadge();
+  renderHistory();
+  closeModal();
+  toast('Laporan dihapus','success');
+}
+function clearHistory(){
+  openModal('Hapus Semua History','<p>Yakin ingin menghapus semua history? Tindakan ini tidak dapat dibatalkan.</p>',
+    `<button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+     <button class="btn btn-danger" onclick="confirmClearHistory()">Hapus Semua</button>`);
+}
+function confirmClearHistory(){
+  localStorage.removeItem(LS.HISTORY);
+  updateHistoryBadge();
+  renderHistory();
+  closeModal();
+  toast('Semua history dihapus','success');
+}
+
+/* =========================================================
+   FORM HELPERS
+========================================================= */
+function populateForm(d){
+  $('f_nama').value = d.nama||'';
+  $('f_kode').value = d.kode||'';
+  $('f_sat').value = d.sat||'';
+  $('f_bulan').value = d.bulan||'Juli';
+  $('f_tahun').value = d.tahun||2026;
+  $('f_jhk').value = d.jhk||0;
+  $('f_hk').value = d.hk||0;
+  $('f_targetNS').value = d.targetNS||0;
+  $('f_bestEst').value = d.bestEst||0;
+  $('f_actualNS').value = d.actualNS||0;
+  $('f_targetSPD').value = d.targetSPD||0;
+  $('f_shift1').value = d.shift1||0;
+  $('f_shift2').value = d.shift2||0;
+  $('f_tfActual').value = d.tfActual||0;
+  $('f_tfShould').value = d.tfShould||0;
+  $('f_nsPrev').value = d.nsPrev||0;
+  $('f_nsCurr').value = d.nsCurr||0;
+  $('f_targetGMpct').value = d.targetGMpct||0;
+  $('f_actualGMpct').value = d.actualGMpct||0;
+  $('f_targetGMrp').value = d.targetGMrp||0;
+  $('f_actualGMrp').value = d.actualGMrp||0;
+}
+function resetForm(){
+  openModal('Reset Form','<p>Yakin ingin mereset semua input?</p>',
+    `<button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+     <button class="btn btn-danger" onclick="confirmReset()">Reset</button>`);
+}
+function confirmReset(){
+  document.querySelectorAll('#page-input input[type="number"]').forEach(i=>i.value=0);
+  $('f_jhk').value=26;$('f_hk').value=14;
+  $('f_nama').value='';$('f_kode').value='';$('f_sat').value='';
+  recalc();
+  closeModal();
+  toast('Form direset','success');
+}
+function loadSampleData(){
+  const sample = {
+    nama:'Alfamart Sudirman 01',kode:'12345-A',sat:'SAT 01',
+    bulan:'Juli',tahun:2026,jhk:27,hk:14,
+    targetNS:540000000,bestEst:560000000,actualNS:310000000,
+    targetSPD:20000000,shift1:11000000,shift2:9000000,
+    tfActual:45000000,tfShould:50000000,
+    nsPrev:480000000,nsCurr:520000000,
+    targetGMpct:12.5,actualGMpct:11.8,targetGMrp:67500000,actualGMrp:61360000
+  };
+  populateForm(sample);
+  recalc();
+  toast('Sample data dimuat','success');
+}
+
+function generateReport(){
+  saveToHistory();
+  renderReport();
+  navigateTo('report');
+  toast('Report berhasil di-generate','success');
+}
+
+/* =========================================================
+   SETTINGS
+========================================================= */
+function loadSettings(){
+  const s = JSON.parse(localStorage.getItem(LS.SETTINGS)||'null');
+  if(s) state.settings = {...state.settings,...s};
+  state.logo = localStorage.getItem(LS.LOGO);
+  state.ttd = localStorage.getItem(LS.TTD);
+
+  $('s_nama').value = state.settings.nama;
+  $('s_jabatan').value = state.settings.jabatan;
+  $('s_footer').value = state.settings.footer;
+  $('footerText').textContent = state.settings.footer;
+  $('headerUser').textContent = state.settings.nama;
+  $('sidebarUser').textContent = state.settings.nama;
+  const initial = (state.settings.nama||'B').charAt(0).toUpperCase();
+  $('headerAvatar').textContent = initial;
+  $('sidebarAvatar').textContent = initial;
+
+  if(state.logo){
+    $('logoPreview').innerHTML = `<img src="${state.logo}" style="width:100%;height:100%;object-fit:contain">`;
+    $('sidebarLogo').innerHTML = `<img src="${state.logo}" style="width:100%;height:100%;border-radius:10px;object-fit:cover">`;
+    $('aboutLogo').innerHTML = `<img src="${state.logo}" style="width:100%;height:100%;border-radius:20px;object-fit:cover">`;
+  }
+  if(state.ttd){
+    $('ttdPreview').innerHTML = `<img src="${state.ttd}" style="max-width:100%;max-height:100%;object-fit:contain">`;
+  }
+  applyTheme();
+}
+function saveSettings(silent){
+  state.settings.nama = $('s_nama').value;
+  state.settings.jabatan = $('s_jabatan').value;
+  state.settings.footer = $('s_footer').value;
+  localStorage.setItem(LS.SETTINGS,JSON.stringify(state.settings));
+  $('footerText').textContent = state.settings.footer;
+  $('headerUser').textContent = state.settings.nama;
+  $('sidebarUser').textContent = state.settings.nama;
+  const initial = (state.settings.nama||'B').charAt(0).toUpperCase();
+  $('headerAvatar').textContent = initial;
+  $('sidebarAvatar').textContent = initial;
+  if(!silent) toast('Settings disimpan','success');
+}
+function handleLogo(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ev=>{
+    state.logo = ev.target.result;
+    localStorage.setItem(LS.LOGO,state.logo);
+    $('logoPreview').innerHTML = `<img src="${state.logo}" style="width:100%;height:100%;object-fit:contain">`;
+    $('sidebarLogo').innerHTML = `<img src="${state.logo}" style="width:100%;height:100%;border-radius:10px;object-fit:cover">`;
+    $('aboutLogo').innerHTML = `<img src="${state.logo}" style="width:100%;height:100%;border-radius:20px;object-fit:cover">`;
+    toast('Logo berhasil di-upload','success');
+  };
+  r.readAsDataURL(f);
+}
+function clearLogo(){
+  state.logo = null;
+  localStorage.removeItem(LS.LOGO);
+  $('logoPreview').innerHTML = `<i class="ri-image-line" style="font-size:32px;color:var(--text-soft)"></i>`;
+  $('sidebarLogo').innerHTML = 'A';
+  $('aboutLogo').innerHTML = 'A';
+  toast('Logo dihapus','info');
+}
+function handleTTD(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ev=>{
+    state.ttd = ev.target.result;
+    localStorage.setItem(LS.TTD,state.ttd);
+    $('ttdPreview').innerHTML = `<img src="${state.ttd}" style="max-width:100%;max-height:100%;object-fit:contain">`;
+    toast('TTD berhasil di-upload','success');
+  };
+  r.readAsDataURL(f);
+}
+function clearTTD(){
+  state.ttd = null;
+  localStorage.removeItem(LS.TTD);
+  $('ttdPreview').innerHTML = `<i class="ri-quill-pen-line" style="font-size:32px;color:var(--text-soft)"></i>`;
+  toast('TTD dihapus','info');
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+function init(){
+  loadSettings();
+  const saved = JSON.parse(localStorage.getItem(LS.DATA)||'null');
+  if(saved){
+    state.data = saved;
+    populateForm(saved);
+  }
+  updateHistoryBadge();
+  recalc();
+
+  // Loading simulation
+  setTimeout(()=>toast('Selamat datang, '+state.settings.nama+'!','success'),500);
+}
+
+window.addEventListener('load',init);
+window.addEventListener('beforeunload',()=>{
+  saveData();
+  if(state.data && state.data.nama) saveToHistory();
+});
+</script>
+</body>
+</html>
