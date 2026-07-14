@@ -9,7 +9,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
 
-<!-- Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -17,9 +16,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
 <style>
-/* =========================================================
-   DESIGN TOKENS
-========================================================= */
 :root{
   --primary:#005BAC;
   --primary-dark:#00468A;
@@ -75,9 +71,6 @@
   --shadow-xl:0 20px 40px rgba(0,0,0,.5);
 }
 
-/* =========================================================
-   RESET
-========================================================= */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{
@@ -99,12 +92,10 @@ img{max-width:100%;display:block}
 ::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:10px}
 ::-webkit-scrollbar-thumb:hover{background:var(--text-soft)}
 
-/* =========================================================
-   LAYOUT
-========================================================= */
-.app{display:flex;min-height:100vh}
+/* ============ LAYOUT ============ */
+.app{display:flex;min-height:100vh;position:relative}
 
-/* SIDEBAR */
+/* ============ SIDEBAR ============ */
 .sidebar{
   position:fixed;
   top:0;left:0;bottom:0;
@@ -112,9 +103,18 @@ img{max-width:100%;display:block}
   background:var(--surface);
   border-right:1px solid var(--border);
   display:flex;flex-direction:column;
-  z-index:100;
+  z-index:200;
   transition:transform var(--transition);
 }
+.sidebar-overlay{
+  display:none;
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.5);
+  z-index:150;
+  backdrop-filter:blur(2px);
+}
+.sidebar-overlay.active{display:block}
+
 .sidebar-brand{
   height:var(--header-h);
   display:flex;align-items:center;gap:12px;
@@ -122,13 +122,16 @@ img{max-width:100%;display:block}
   border-bottom:1px solid var(--border);
   background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
   color:#fff;
+  flex-shrink:0;
 }
 .sidebar-brand .logo{
   width:40px;height:40px;border-radius:10px;
   background:#fff;display:flex;align-items:center;justify-content:center;
   font-weight:800;color:var(--primary);font-size:18px;
   box-shadow:0 4px 12px rgba(0,0,0,.15);
+  overflow:hidden;flex-shrink:0;
 }
+.sidebar-brand .logo img{width:100%;height:100%;object-fit:cover}
 .sidebar-brand .brand-text{line-height:1.2}
 .sidebar-brand .brand-text .t1{font-weight:700;font-size:14px;letter-spacing:.3px}
 .sidebar-brand .brand-text .t2{font-size:11px;opacity:.85;font-weight:400}
@@ -146,9 +149,12 @@ img{max-width:100%;display:block}
   color:var(--text-muted);font-weight:500;font-size:13.5px;
   cursor:pointer;transition:all var(--transition);
   margin-bottom:2px;position:relative;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
 }
-.nav-item i{font-size:18px}
+.nav-item i{font-size:18px;flex-shrink:0}
 .nav-item:hover{background:var(--primary-light);color:var(--primary)}
+.nav-item:active{transform:scale(.98)}
 .nav-item.active{
   background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
   color:#fff;box-shadow:0 4px 12px rgba(0,91,172,.25);
@@ -166,23 +172,25 @@ img{max-width:100%;display:block}
   padding:14px 16px;border-top:1px solid var(--border);
   display:flex;align-items:center;gap:10px;
   font-size:11px;color:var(--text-muted);
+  flex-shrink:0;
 }
 .sidebar-footer .avatar{
   width:36px;height:36px;border-radius:50%;
   background:linear-gradient(135deg,var(--secondary),var(--accent));
   display:flex;align-items:center;justify-content:center;
-  color:#fff;font-weight:700;font-size:13px;
+  color:#fff;font-weight:700;font-size:13px;flex-shrink:0;
 }
 
-/* MAIN */
+/* ============ MAIN ============ */
 .main{
   margin-left:var(--sidebar-w);
   flex:1;display:flex;flex-direction:column;min-height:100vh;
+  position:relative;z-index:1;
 }
 
-/* HEADER */
+/* ============ HEADER ============ */
 .header{
-  position:sticky;top:0;z-index:50;
+  position:sticky;top:0;z-index:100;
   height:var(--header-h);
   background:rgba(255,255,255,.85);
   backdrop-filter:blur(20px);
@@ -197,6 +205,7 @@ img{max-width:100%;display:block}
   display:none;width:40px;height:40px;border-radius:10px;
   align-items:center;justify-content:center;
   background:var(--surface-2);color:var(--text);
+  flex-shrink:0;
 }
 .header-title{flex:1;min-width:0}
 .header-title h1{
@@ -209,33 +218,36 @@ img{max-width:100%;display:block}
 .header-actions{display:flex;align-items:center;gap:10px}
 .icon-btn{
   width:40px;height:40px;border-radius:10px;
-  display:flex;align-items:center;justify-content:center;
+  display:inline-flex;align-items:center;justify-content:center;
   background:var(--surface-2);color:var(--text);
   position:relative;transition:all var(--transition);
+  flex-shrink:0;
 }
 .icon-btn:hover{background:var(--primary-light);color:var(--primary)}
+.icon-btn:active{transform:scale(.95)}
 .icon-btn .dot{
   position:absolute;top:8px;right:8px;
   width:8px;height:8px;border-radius:50%;
   background:var(--secondary);border:2px solid var(--surface);
 }
 .profile-btn{
-  display:flex;align-items:center;gap:10px;
+  display:inline-flex;align-items:center;gap:10px;
   padding:6px 12px 6px 6px;border-radius:40px;
   background:var(--surface-2);transition:all var(--transition);
 }
 .profile-btn:hover{background:var(--primary-light)}
+.profile-btn:active{transform:scale(.98)}
 .profile-btn .avatar{
   width:32px;height:32px;border-radius:50%;
   background:linear-gradient(135deg,var(--primary),var(--secondary));
   display:flex;align-items:center;justify-content:center;
-  color:#fff;font-weight:700;font-size:12px;
+  color:#fff;font-weight:700;font-size:12px;flex-shrink:0;
 }
 .profile-btn .info{line-height:1.2;text-align:left}
 .profile-btn .info .n{font-size:12.5px;font-weight:600}
 .profile-btn .info .r{font-size:10.5px;color:var(--text-muted)}
 
-/* CONTENT */
+/* ============ CONTENT ============ */
 .content{padding:28px;flex:1}
 .page{display:none;animation:fadeIn .4s ease}
 .page.active{display:block}
@@ -249,17 +261,22 @@ img{max-width:100%;display:block}
 .page-head p{font-size:13px;color:var(--text-muted);margin-top:2px}
 .page-head .actions{display:flex;gap:8px;flex-wrap:wrap}
 
-/* BUTTONS */
+/* ============ BUTTONS ============ */
 .btn{
   display:inline-flex;align-items:center;gap:8px;
   padding:10px 18px;border-radius:10px;
   font-weight:600;font-size:13px;
   transition:all var(--transition);
   border:1px solid transparent;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  white-space:nowrap;
 }
 .btn i{font-size:16px}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(0) scale(.98)}
 .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 4px 12px rgba(0,91,172,.25)}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,91,172,.35)}
+.btn-primary:hover{box-shadow:0 8px 20px rgba(0,91,172,.35)}
 .btn-secondary{background:var(--surface);color:var(--text);border-color:var(--border)}
 .btn-secondary:hover{border-color:var(--primary);color:var(--primary)}
 .btn-danger{background:var(--secondary);color:#fff}
@@ -268,7 +285,7 @@ img{max-width:100%;display:block}
 .btn-ghost:hover{background:var(--surface-2);color:var(--text)}
 .btn-sm{padding:7px 12px;font-size:12px}
 
-/* CARDS */
+/* ============ CARDS ============ */
 .card{
   background:var(--surface);
   border:1px solid var(--border);
@@ -284,7 +301,7 @@ img{max-width:100%;display:block}
 .card-head .ico{
   width:38px;height:38px;border-radius:10px;
   display:flex;align-items:center;justify-content:center;
-  font-size:18px;color:#fff;
+  font-size:18px;color:#fff;flex-shrink:0;
 }
 .card-head h3{font-size:14.5px;font-weight:700;letter-spacing:.2px}
 .card-head p{font-size:11.5px;color:var(--text-muted);margin-top:1px}
@@ -297,14 +314,14 @@ img{max-width:100%;display:block}
 .ico-purple{background:linear-gradient(135deg,#7C3AED,#5B21B6)}
 .ico-teal{background:linear-gradient(135deg,#0D9488,#0F766E)}
 
-/* GRID */
+/* ============ GRID ============ */
 .grid{display:grid;gap:20px}
 .grid-2{grid-template-columns:repeat(2,1fr)}
 .grid-3{grid-template-columns:repeat(3,1fr)}
 .grid-4{grid-template-columns:repeat(4,1fr)}
 .grid-6{grid-template-columns:repeat(6,1fr)}
 
-/* FORM */
+/* ============ FORM ============ */
 .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 .form-group{display:flex;flex-direction:column;gap:6px}
 .form-group.full{grid-column:1/-1}
@@ -318,6 +335,7 @@ img{max-width:100%;display:block}
   border-radius:10px;background:var(--surface-2);
   color:var(--text);transition:all var(--transition);
   font-size:13.5px;font-weight:500;
+  width:100%;
 }
 .form-control:focus{
   outline:none;border-color:var(--primary);
@@ -326,7 +344,7 @@ img{max-width:100%;display:block}
 }
 .form-control[readonly]{background:var(--primary-light);color:var(--primary);font-weight:600}
 
-/* KPI */
+/* ============ KPI ============ */
 .kpi{
   padding:18px;border-radius:var(--radius);
   background:var(--surface);border:1px solid var(--border);
@@ -356,7 +374,7 @@ img{max-width:100%;display:block}
 .kpi-sub .up{color:var(--success);font-weight:700}
 .kpi-sub .down{color:var(--danger);font-weight:700}
 
-/* STATUS CHIP */
+/* ============ CHIP ============ */
 .chip{
   display:inline-flex;align-items:center;gap:5px;
   padding:4px 10px;border-radius:20px;
@@ -367,7 +385,7 @@ img{max-width:100%;display:block}
 .chip-warning{background:var(--warning-light);color:var(--warning)}
 .chip-info{background:var(--primary-light);color:var(--primary)}
 
-/* ACTION PLAN */
+/* ============ ACTION LIST ============ */
 .action-list{display:flex;flex-direction:column;gap:10px}
 .action-item{
   display:flex;gap:12px;padding:14px;
@@ -382,8 +400,8 @@ img{max-width:100%;display:block}
   color:#fff;display:flex;align-items:center;justify-content:center;
   font-size:12px;font-weight:700;
 }
-.action-content{flex:1}
-.action-title{font-size:13px;font-weight:700;margin-bottom:3px}
+.action-content{flex:1;min-width:0}
+.action-title{font-size:13px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
 .action-desc{font-size:12px;color:var(--text-muted);line-height:1.5}
 .action-tag{
   margin-top:6px;display:inline-block;
@@ -391,7 +409,7 @@ img{max-width:100%;display:block}
   letter-spacing:.5px;color:var(--primary);
 }
 
-/* TABLE */
+/* ============ TABLE ============ */
 .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{
@@ -404,24 +422,8 @@ td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text)}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:var(--surface-2)}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
-td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
 
-/* TABS */
-.tabs{
-  display:flex;gap:4px;padding:4px;
-  background:var(--surface-2);border-radius:12px;
-  border:1px solid var(--border);
-  margin-bottom:20px;width:fit-content;flex-wrap:wrap;
-}
-.tab{
-  padding:8px 16px;border-radius:8px;
-  font-size:12.5px;font-weight:600;color:var(--text-muted);
-  transition:all var(--transition);
-}
-.tab:hover{color:var(--text)}
-.tab.active{background:var(--surface);color:var(--primary);box-shadow:var(--shadow-sm)}
-
-/* REPORT PREVIEW (A4) */
+/* ============ REPORT PREVIEW ============ */
 .report-preview{
   background:#fff;color:#000;
   width:210mm;min-height:297mm;
@@ -442,9 +444,9 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
   background:linear-gradient(135deg,#ED1C24,#c8131a);
   display:flex;align-items:center;justify-content:center;
   color:#fff;font-weight:800;font-size:22px;
-  flex-shrink:0;
+  flex-shrink:0;overflow:hidden;
 }
-.rp-logo img{width:100%;height:100%;border-radius:10px;object-fit:cover}
+.rp-logo img{width:100%;height:100%;object-fit:cover}
 .rp-header-info{flex:1}
 .rp-header-info .sat{font-size:10pt;color:#005BAC;font-weight:700;letter-spacing:1px}
 .rp-header-info h1{font-size:16pt;font-weight:800;margin:3px 0;color:#005BAC !important}
@@ -453,6 +455,7 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
   display:flex;justify-content:space-between;
   font-size:9pt;margin-bottom:14px;
   padding:8px 12px;background:#E8F1FB;border-radius:6px;
+  flex-wrap:wrap;gap:8px;
 }
 .rp-section{margin-bottom:18px}
 .rp-section h2{
@@ -461,7 +464,6 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
   border-left:4px solid #005BAC;margin-bottom:10px;
   border-radius:0 4px 4px 0;
 }
-.rp-section h3{font-size:10.5pt;font-weight:700;margin:10px 0 6px;color:#0F172A !important}
 .rp-table{width:100%;border-collapse:collapse;font-size:9.5pt;margin-bottom:10px}
 .rp-table th{
   background:#005BAC !important;color:#fff !important;
@@ -502,7 +504,7 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
 .rp-sign-box .name{font-weight:700;font-size:10.5pt;border-top:1px solid #000;padding-top:4px;margin-top:4px}
 .rp-sign-box .role{font-size:9pt;color:#475569 !important}
 
-/* HISTORY */
+/* ============ HISTORY ============ */
 .history-item{
   display:flex;align-items:center;gap:14px;
   padding:14px 16px;border:1px solid var(--border);
@@ -517,11 +519,11 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
   color:#fff;font-size:20px;flex-shrink:0;
 }
 .history-info{flex:1;min-width:0}
-.history-info .h-title{font-weight:700;font-size:13.5px;margin-bottom:2px}
+.history-info .h-title{font-weight:700;font-size:13.5px;margin-bottom:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .history-info .h-meta{font-size:11.5px;color:var(--text-muted);display:flex;gap:12px;flex-wrap:wrap}
-.history-actions{display:flex;gap:6px}
+.history-actions{display:flex;gap:6px;flex-shrink:0}
 
-/* SETTINGS */
+/* ============ SETTINGS ============ */
 .settings-section{margin-bottom:24px}
 .settings-section h3{
   font-size:13px;font-weight:700;margin-bottom:12px;
@@ -532,6 +534,7 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
   position:relative;width:44px;height:24px;
   background:var(--border-strong);border-radius:20px;
   cursor:pointer;transition:all var(--transition);
+  flex-shrink:0;
 }
 .toggle-switch::after{
   content:'';position:absolute;top:2px;left:2px;
@@ -542,7 +545,7 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
 .toggle-switch.active{background:var(--primary)}
 .toggle-switch.active::after{left:22px}
 
-/* ABOUT */
+/* ============ ABOUT ============ */
 .about-hero{
   padding:40px;border-radius:var(--radius-lg);
   background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
@@ -561,11 +564,13 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
   display:flex;align-items:center;justify-content:center;
   color:var(--primary);font-weight:800;font-size:32px;
   box-shadow:0 10px 30px rgba(0,0,0,.2);
+  overflow:hidden;
 }
+.about-hero .logo-big img{width:100%;height:100%;object-fit:cover}
 .about-hero h2{font-size:28px;font-weight:800;margin-bottom:6px}
 .about-hero p{opacity:.9;font-size:14px}
 
-/* FOOTER */
+/* ============ FOOTER ============ */
 .footer{
   padding:16px 28px;border-top:1px solid var(--border);
   background:var(--surface);
@@ -575,27 +580,21 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
 .footer .brand{display:flex;align-items:center;gap:8px;font-weight:600}
 .footer .brand i{color:var(--primary);font-size:16px}
 
-/* SKELETON */
-.skeleton{
-  background:linear-gradient(90deg,var(--surface-2) 0%,var(--border) 50%,var(--surface-2) 100%);
-  background-size:200% 100%;
-  animation:skeleton 1.5s infinite;
-  border-radius:6px;
-}
-@keyframes skeleton{0%{background-position:200% 0}100%{background-position:-200% 0}}
-
-/* TOAST */
+/* ============ TOAST ============ */
 .toast-container{
   position:fixed;top:20px;right:20px;z-index:9999;
   display:flex;flex-direction:column;gap:10px;
+  pointer-events:none;
 }
 .toast{
   padding:12px 18px;border-radius:10px;
   background:var(--surface);border:1px solid var(--border);
   box-shadow:var(--shadow-lg);
   display:flex;align-items:center;gap:10px;
-  min-width:280px;animation:slideIn .3s ease;
+  min-width:280px;max-width:380px;
+  animation:slideIn .3s ease;
   font-size:13px;font-weight:500;
+  pointer-events:auto;
 }
 .toast.success{border-left:4px solid var(--success)}
 .toast.success i{color:var(--success)}
@@ -605,18 +604,26 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
 .toast.info i{color:var(--primary)}
 @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
 
-/* MODAL */
+/* ============ MODAL ============ */
 .modal-backdrop{
   position:fixed;inset:0;background:rgba(15,23,42,.5);
-  backdrop-filter:blur(4px);z-index:1000;
+  backdrop-filter:blur(4px);z-index:5000;
   display:none;align-items:center;justify-content:center;
-  padding:20px;animation:fadeIn .2s ease;
+  padding:20px;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .2s ease;
 }
-.modal-backdrop.active{display:flex}
+.modal-backdrop.active{
+  display:flex;
+  pointer-events:auto;
+  opacity:1;
+}
 .modal{
   background:var(--surface);border-radius:var(--radius-lg);
   max-width:500px;width:100%;max-height:90vh;overflow-y:auto;
   box-shadow:var(--shadow-xl);animation:scaleIn .3s ease;
+  pointer-events:auto;
 }
 @keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
 .modal-head{
@@ -630,7 +637,7 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
   display:flex;justify-content:flex-end;gap:8px;
 }
 
-/* RESPONSIVE */
+/* ============ RESPONSIVE ============ */
 @media (max-width:1100px){
   .grid-4{grid-template-columns:repeat(2,1fr)}
   .grid-6{grid-template-columns:repeat(3,1fr)}
@@ -639,7 +646,7 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
   .sidebar{transform:translateX(-100%)}
   .sidebar.open{transform:translateX(0);box-shadow:var(--shadow-xl)}
   .main{margin-left:0}
-  .menu-toggle{display:flex}
+  .menu-toggle{display:inline-flex}
   .grid-2,.grid-3{grid-template-columns:1fr}
   .grid-6{grid-template-columns:repeat(2,1fr)}
   .content{padding:18px}
@@ -653,9 +660,11 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
   .header-title h1{font-size:14px}
   .header-title p{display:none}
   .page-head{flex-direction:column;align-items:flex-start}
+  .history-item{flex-wrap:wrap}
+  .history-actions{width:100%;justify-content:flex-end}
 }
 
-/* PRINT */
+/* ============ PRINT ============ */
 @media print{
   body *{visibility:hidden}
   .report-preview,.report-preview *{visibility:visible}
@@ -671,7 +680,10 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
 
 <div class="app">
 
-  <!-- ================= SIDEBAR ================= -->
+  <!-- SIDEBAR OVERLAY (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <div class="logo" id="sidebarLogo">A</div>
@@ -683,15 +695,15 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
     <nav class="sidebar-nav">
       <div class="nav-section">
         <div class="nav-title">Main</div>
-        <div class="nav-item active" data-page="dashboard"><i class="ri-dashboard-3-line"></i>Dashboard</div>
-        <div class="nav-item" data-page="input"><i class="ri-edit-box-line"></i>Input Monitoring</div>
-        <div class="nav-item" data-page="report"><i class="ri-file-chart-line"></i>Generate Report</div>
+        <div class="nav-item active" data-page="dashboard"><i class="ri-dashboard-3-line"></i><span>Dashboard</span></div>
+        <div class="nav-item" data-page="input"><i class="ri-edit-box-line"></i><span>Input Monitoring</span></div>
+        <div class="nav-item" data-page="report"><i class="ri-file-chart-line"></i><span>Generate Report</span></div>
       </div>
       <div class="nav-section">
         <div class="nav-title">Data</div>
-        <div class="nav-item" data-page="history"><i class="ri-history-line"></i>History Report<span class="badge" id="historyBadge">0</span></div>
-        <div class="nav-item" data-page="settings"><i class="ri-settings-4-line"></i>Settings</div>
-        <div class="nav-item" data-page="about"><i class="ri-information-line"></i>About</div>
+        <div class="nav-item" data-page="history"><i class="ri-history-line"></i><span>History Report</span><span class="badge" id="historyBadge">0</span></div>
+        <div class="nav-item" data-page="settings"><i class="ri-settings-4-line"></i><span>Settings</span></div>
+        <div class="nav-item" data-page="about"><i class="ri-information-line"></i><span>About</span></div>
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -703,12 +715,12 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
     </div>
   </aside>
 
-  <!-- ================= MAIN ================= -->
+  <!-- MAIN -->
   <div class="main">
 
     <!-- HEADER -->
     <header class="header">
-      <button class="menu-toggle icon-btn" id="menuToggle"><i class="ri-menu-line"></i></button>
+      <button class="menu-toggle icon-btn" id="menuToggle" type="button" aria-label="Menu"><i class="ri-menu-line"></i></button>
       <div class="header-title">
         <h1>LAPORAN MONITORING <span class="accent">SAME STORE</span></h1>
         <p>Pencapaian IK&T & Net Sales (MoM) — Retail Performance Monitoring System</p>
@@ -718,9 +730,9 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
           <div style="font-weight:600;color:var(--text)" id="headerDate">—</div>
           <div id="headerTime">—</div>
         </div>
-        <button class="icon-btn" id="themeToggle" title="Toggle Dark Mode"><i class="ri-moon-line"></i></button>
-        <button class="icon-btn" title="Notifications"><i class="ri-notification-3-line"></i><span class="dot"></span></button>
-        <button class="profile-btn">
+        <button class="icon-btn" id="themeToggle" type="button" title="Toggle Dark Mode"><i class="ri-moon-line"></i></button>
+        <button class="icon-btn" id="notifBtn" type="button" title="Notifications"><i class="ri-notification-3-line"></i><span class="dot"></span></button>
+        <button class="profile-btn" type="button" id="profileBtn">
           <div class="avatar" id="headerAvatar">B</div>
           <div class="info">
             <div class="n" id="headerUser">Brandon</div>
@@ -733,7 +745,7 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
     <!-- CONTENT -->
     <main class="content">
 
-      <!-- ============ DASHBOARD ============ -->
+      <!-- DASHBOARD -->
       <section class="page active" id="page-dashboard">
         <div class="page-head">
           <div>
@@ -741,12 +753,11 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
             <p>Ringkasan performa toko secara real-time</p>
           </div>
           <div class="actions">
-            <button class="btn btn-secondary" onclick="resetForm()"><i class="ri-refresh-line"></i>Reset</button>
-            <button class="btn btn-primary" onclick="navigateTo('input')"><i class="ri-add-line"></i>Input Data</button>
+            <button class="btn btn-secondary" type="button" id="btnReset"><i class="ri-refresh-line"></i>Reset</button>
+            <button class="btn btn-primary" type="button" id="btnGoInput"><i class="ri-add-line"></i>Input Data</button>
           </div>
         </div>
 
-        <!-- KPI ROW -->
         <div class="grid grid-4" style="margin-bottom:20px">
           <div class="kpi">
             <div class="kpi-top">
@@ -782,7 +793,6 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
           </div>
         </div>
 
-        <!-- CHARTS -->
         <div class="grid grid-2" style="margin-bottom:20px">
           <div class="card">
             <div class="card-head">
@@ -834,7 +844,7 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
         </div>
       </section>
 
-      <!-- ============ INPUT ============ -->
+      <!-- INPUT -->
       <section class="page" id="page-input">
         <div class="page-head">
           <div>
@@ -842,13 +852,12 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
             <p>Isi data toko — semua perhitungan berjalan otomatis</p>
           </div>
           <div class="actions">
-            <button class="btn btn-secondary" onclick="loadSampleData()"><i class="ri-magic-line"></i>Sample Data</button>
-            <button class="btn btn-primary" onclick="generateReport()"><i class="ri-file-chart-line"></i>Generate Report</button>
+            <button class="btn btn-secondary" type="button" id="btnSample"><i class="ri-magic-line"></i>Sample Data</button>
+            <button class="btn btn-primary" type="button" id="btnGenerate"><i class="ri-file-chart-line"></i>Generate Report</button>
           </div>
         </div>
 
         <div class="grid grid-2" style="margin-bottom:20px">
-          <!-- Card 1: Informasi Toko -->
           <div class="card">
             <div class="card-head">
               <div class="ico ico-blue"><i class="ri-store-2-line"></i></div>
@@ -883,11 +892,11 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
                 </div>
                 <div class="form-group">
                   <label class="form-label">JHK (Bulan Ini)</label>
-                  <input class="form-control" id="f_jhk" type="number" value="26" oninput="recalc()">
+                  <input class="form-control" id="f_jhk" type="number" value="26">
                 </div>
                 <div class="form-group">
                   <label class="form-label">HK Berjalan</label>
-                  <input class="form-control" id="f_hk" type="number" value="14" oninput="recalc()">
+                  <input class="form-control" id="f_hk" type="number" value="14">
                 </div>
                 <div class="form-group full">
                   <label class="form-label">Sisa JHK</label>
@@ -897,7 +906,6 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
             </div>
           </div>
 
-          <!-- Card 2: Net Sales -->
           <div class="card">
             <div class="card-head">
               <div class="ico ico-green"><i class="ri-money-dollar-circle-line"></i></div>
@@ -907,15 +915,15 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
               <div class="form-grid">
                 <div class="form-group full">
                   <label class="form-label">Target NS Bulanan</label>
-                  <input class="form-control" id="f_targetNS" type="number" value="0" oninput="recalc()">
+                  <input class="form-control" id="f_targetNS" type="number" value="0">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Best Estimate</label>
-                  <input class="form-control" id="f_bestEst" type="number" value="0" oninput="recalc()">
+                  <input class="form-control" id="f_bestEst" type="number" value="0">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Actual NS Retail</label>
-                  <input class="form-control" id="f_actualNS" type="number" value="0" oninput="recalc()">
+                  <input class="form-control" id="f_actualNS" type="number" value="0">
                 </div>
                 <div class="form-group full">
                   <label class="form-label">Actual NS Seharusnya (Auto)</label>
@@ -927,7 +935,6 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
         </div>
 
         <div class="grid grid-2" style="margin-bottom:20px">
-          <!-- Card 3: Target -->
           <div class="card">
             <div class="card-head">
               <div class="ico ico-red"><i class="ri-target-line"></i></div>
@@ -937,7 +944,7 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
               <div class="form-grid">
                 <div class="form-group full">
                   <label class="form-label">Target SPD (Input)</label>
-                  <input class="form-control" id="f_targetSPD" type="number" value="0" oninput="recalc()">
+                  <input class="form-control" id="f_targetSPD" type="number" value="0">
                 </div>
                 <div class="form-group full">
                   <label class="form-label">New Target SPD (Auto)</label>
@@ -945,17 +952,16 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
                 </div>
                 <div class="form-group">
                   <label class="form-label">Target Shift 1</label>
-                  <input class="form-control" id="f_shift1" type="number" value="0" oninput="recalc()">
+                  <input class="form-control" id="f_shift1" type="number" value="0">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Target Shift 2</label>
-                  <input class="form-control" id="f_shift2" type="number" value="0" oninput="recalc()">
+                  <input class="form-control" id="f_shift2" type="number" value="0">
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Card 4: TF -->
           <div class="card">
             <div class="card-head">
               <div class="ico ico-orange"><i class="ri-exchange-line"></i></div>
@@ -965,11 +971,11 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
               <div class="form-grid">
                 <div class="form-group">
                   <label class="form-label">TF Actual</label>
-                  <input class="form-control" id="f_tfActual" type="number" value="0" oninput="recalc()">
+                  <input class="form-control" id="f_tfActual" type="number" value="0">
                 </div>
                 <div class="form-group">
                   <label class="form-label">TF Seharusnya</label>
-                  <input class="form-control" id="f_tfShould" type="number" value="0" oninput="recalc()">
+                  <input class="form-control" id="f_tfShould" type="number" value="0">
                 </div>
                 <div class="form-group full">
                   <label class="form-label">Gap TF (Auto)</label>
@@ -981,7 +987,6 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
         </div>
 
         <div class="grid grid-2" style="margin-bottom:20px">
-          <!-- Card 5: Growth -->
           <div class="card">
             <div class="card-head">
               <div class="ico ico-teal"><i class="ri-line-chart-line"></i></div>
@@ -991,11 +996,11 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
               <div class="form-grid">
                 <div class="form-group">
                   <label class="form-label">NS Bulan Lalu (Juni)</label>
-                  <input class="form-control" id="f_nsPrev" type="number" value="0" oninput="recalc()">
+                  <input class="form-control" id="f_nsPrev" type="number" value="0">
                 </div>
                 <div class="form-group">
                   <label class="form-label">NS Bulan Ini (Juli)</label>
-                  <input class="form-control" id="f_nsCurr" type="number" value="0" oninput="recalc()">
+                  <input class="form-control" id="f_nsCurr" type="number" value="0">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Growth Rp (Auto)</label>
@@ -1009,7 +1014,6 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
             </div>
           </div>
 
-          <!-- Card 6: Gross Margin -->
           <div class="card">
             <div class="card-head">
               <div class="ico ico-purple"><i class="ri-percent-line"></i></div>
@@ -1019,19 +1023,19 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
               <div class="form-grid">
                 <div class="form-group">
                   <label class="form-label">Target GM %</label>
-                  <input class="form-control" id="f_targetGMpct" type="number" step="0.01" value="0" oninput="recalc()">
+                  <input class="form-control" id="f_targetGMpct" type="number" step="0.01" value="0">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Actual GM %</label>
-                  <input class="form-control" id="f_actualGMpct" type="number" step="0.01" value="0" oninput="recalc()">
+                  <input class="form-control" id="f_actualGMpct" type="number" step="0.01" value="0">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Target GM Rp</label>
-                  <input class="form-control" id="f_targetGMrp" type="number" value="0" oninput="recalc()">
+                  <input class="form-control" id="f_targetGMrp" type="number" value="0">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Actual GM Rp</label>
-                  <input class="form-control" id="f_actualGMrp" type="number" value="0" oninput="recalc()">
+                  <input class="form-control" id="f_actualGMrp" type="number" value="0">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Gap GM % (Auto)</label>
@@ -1046,7 +1050,6 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
           </div>
         </div>
 
-        <!-- RESULT SUMMARY -->
         <div class="card" style="margin-bottom:20px">
           <div class="card-head">
             <div class="ico ico-green"><i class="ri-calculator-line"></i></div>
@@ -1074,7 +1077,6 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
           </div>
         </div>
 
-        <!-- ACTION PLAN -->
         <div class="card">
           <div class="card-head">
             <div class="ico ico-red"><i class="ri-lightbulb-flash-line"></i></div>
@@ -1087,7 +1089,7 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
         </div>
       </section>
 
-      <!-- ============ REPORT ============ -->
+      <!-- REPORT -->
       <section class="page" id="page-report">
         <div class="page-head">
           <div>
@@ -1095,16 +1097,16 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
             <p>Dokumen profesional format A4</p>
           </div>
           <div class="actions">
-            <button class="btn btn-secondary" onclick="exportPNG()"><i class="ri-image-line"></i>PNG HD</button>
-            <button class="btn btn-secondary" onclick="exportWord()"><i class="ri-file-word-line"></i>Word</button>
-            <button class="btn btn-secondary" onclick="window.print()"><i class="ri-printer-line"></i>Print</button>
-            <button class="btn btn-primary" onclick="exportPDF()"><i class="ri-file-pdf-line"></i>Export PDF</button>
+            <button class="btn btn-secondary" type="button" id="btnPNG"><i class="ri-image-line"></i>PNG HD</button>
+            <button class="btn btn-secondary" type="button" id="btnWord"><i class="ri-file-word-line"></i>Word</button>
+            <button class="btn btn-secondary" type="button" id="btnPrint"><i class="ri-printer-line"></i>Print</button>
+            <button class="btn btn-primary" type="button" id="btnPDF"><i class="ri-file-pdf-line"></i>Export PDF</button>
           </div>
         </div>
         <div id="reportContainer"></div>
       </section>
 
-      <!-- ============ HISTORY ============ -->
+      <!-- HISTORY -->
       <section class="page" id="page-history">
         <div class="page-head">
           <div>
@@ -1112,13 +1114,13 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
             <p>Semua laporan tersimpan otomatis</p>
           </div>
           <div class="actions">
-            <button class="btn btn-danger btn-sm" onclick="clearHistory()"><i class="ri-delete-bin-line"></i>Clear All</button>
+            <button class="btn btn-danger btn-sm" type="button" id="btnClearHistory"><i class="ri-delete-bin-line"></i>Clear All</button>
           </div>
         </div>
         <div id="historyList"></div>
       </section>
 
-      <!-- ============ SETTINGS ============ -->
+      <!-- SETTINGS -->
       <section class="page" id="page-settings">
         <div class="page-head">
           <div>
@@ -1141,7 +1143,7 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
                     <div style="font-weight:600;font-size:13px">Tema Gelap</div>
                     <div style="font-size:11.5px;color:var(--text-muted)">Aktifkan tampilan dark mode</div>
                   </div>
-                  <div class="toggle-switch" id="toggleDark" onclick="toggleTheme()"></div>
+                  <div class="toggle-switch" id="toggleDark"></div>
                 </div>
               </div>
             </div>
@@ -1179,10 +1181,10 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
               <div id="logoPreview" style="width:100px;height:100px;border:2px dashed var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;overflow:hidden;background:var(--surface-2)">
                 <i class="ri-image-line" style="font-size:32px;color:var(--text-soft)"></i>
               </div>
-              <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="handleLogo(event)">
+              <input type="file" id="logoInput" accept="image/*" style="display:none">
               <div style="display:flex;gap:8px">
-                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('logoInput').click()"><i class="ri-upload-line"></i>Upload</button>
-                <button class="btn btn-ghost btn-sm" onclick="clearLogo()"><i class="ri-delete-bin-line"></i>Hapus</button>
+                <button class="btn btn-secondary btn-sm" type="button" id="btnUploadLogo"><i class="ri-upload-line"></i>Upload</button>
+                <button class="btn btn-ghost btn-sm" type="button" id="btnClearLogo"><i class="ri-delete-bin-line"></i>Hapus</button>
               </div>
             </div>
           </div>
@@ -1196,21 +1198,21 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
               <div id="ttdPreview" style="width:180px;height:80px;border:2px dashed var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;overflow:hidden;background:var(--surface-2)">
                 <i class="ri-quill-pen-line" style="font-size:32px;color:var(--text-soft)"></i>
               </div>
-              <input type="file" id="ttdInput" accept="image/*" style="display:none" onchange="handleTTD(event)">
+              <input type="file" id="ttdInput" accept="image/*" style="display:none">
               <div style="display:flex;gap:8px">
-                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ttdInput').click()"><i class="ri-upload-line"></i>Upload</button>
-                <button class="btn btn-ghost btn-sm" onclick="clearTTD()"><i class="ri-delete-bin-line"></i>Hapus</button>
+                <button class="btn btn-secondary btn-sm" type="button" id="btnUploadTTD"><i class="ri-upload-line"></i>Upload</button>
+                <button class="btn btn-ghost btn-sm" type="button" id="btnClearTTD"><i class="ri-delete-bin-line"></i>Hapus</button>
               </div>
             </div>
           </div>
         </div>
 
         <div style="margin-top:16px;text-align:right">
-          <button class="btn btn-primary" onclick="saveSettings()"><i class="ri-save-line"></i>Simpan Settings</button>
+          <button class="btn btn-primary" type="button" id="btnSaveSettings"><i class="ri-save-line"></i>Simpan Settings</button>
         </div>
       </section>
 
-      <!-- ============ ABOUT ============ -->
+      <!-- ABOUT -->
       <section class="page" id="page-about">
         <div class="about-hero">
           <div class="logo-big" id="aboutLogo">A</div>
@@ -1277,7 +1279,6 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
 
     </main>
 
-    <!-- FOOTER -->
     <footer class="footer">
       <div class="brand"><i class="ri-shield-star-line"></i><span id="footerText">Enterprise Monitoring System — Version 1.0 Enterprise</span></div>
       <div>© 2026 Developed By <strong>Brandon</strong> — Chief Of Store</div>
@@ -1285,7 +1286,7 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
   </div>
 </div>
 
-<!-- TOAST CONTAINER -->
+<!-- TOAST -->
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- MODAL -->
@@ -1293,7 +1294,7 @@ td.mono{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px}
   <div class="modal">
     <div class="modal-head">
       <h3 id="modalTitle">Konfirmasi</h3>
-      <button class="icon-btn" onclick="closeModal()"><i class="ri-close-line"></i></button>
+      <button class="icon-btn" type="button" id="modalClose"><i class="ri-close-line"></i></button>
     </div>
     <div class="modal-body" id="modalBody"></div>
     <div class="modal-foot" id="modalFoot"></div>
@@ -1351,16 +1352,30 @@ function toast(msg,type='info'){
   const icons={success:'ri-check-line',error:'ri-close-circle-line',info:'ri-information-line'};
   t.innerHTML=`<i class="${icons[type]}" style="font-size:18px"></i><span>${msg}</span>`;
   $('toastContainer').appendChild(t);
-  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(20px)';setTimeout(()=>t.remove(),300)},3000);
+  setTimeout(()=>{
+    t.style.opacity='0';
+    t.style.transform='translateX(20px)';
+    t.style.transition='all .3s';
+    setTimeout(()=>t.remove(),300);
+  },3000);
 }
 
 function openModal(title,body,actions){
   $('modalTitle').textContent=title;
   $('modalBody').innerHTML=body;
-  $('modalFoot').innerHTML=actions;
+  $('modalFoot').innerHTML=actions||'';
   $('modal').classList.add('active');
+  bindModalActions();
 }
-function closeModal(){$('modal').classList.remove('active')}
+function closeModal(){
+  $('modal').classList.remove('active');
+}
+function bindModalActions(){
+  // rebind buttons inside modal
+  $('modalFoot').querySelectorAll('button').forEach(b=>{
+    // already has onclick inline
+  });
+}
 
 /* =========================================================
    NAVIGATION
@@ -1374,15 +1389,12 @@ function navigateTo(page){
   if(pg) pg.classList.add('active');
   if(page==='history') renderHistory();
   if(page==='report') renderReport();
-  if(window.innerWidth<=900) $('sidebar').classList.remove('open');
+  if(window.innerWidth<=900){
+    $('sidebar').classList.remove('open');
+    $('sidebarOverlay').classList.remove('active');
+  }
   window.scrollTo({top:0,behavior:'smooth'});
 }
-
-document.querySelectorAll('.nav-item').forEach(n=>{
-  n.addEventListener('click',()=>navigateTo(n.dataset.page));
-});
-
-$('menuToggle').addEventListener('click',()=>$('sidebar').classList.toggle('open'));
 
 /* =========================================================
    THEME
@@ -1400,7 +1412,6 @@ function toggleTheme(){
   saveSettings(true);
   applyTheme();
 }
-$('themeToggle').addEventListener('click',toggleTheme);
 
 /* =========================================================
    CLOCK
@@ -1441,24 +1452,19 @@ function recalc(){
     updatedAt:new Date().toISOString()
   };
 
-  // Sisa JHK
   d.sisaJHK = Math.max(0,d.jhk - d.hk);
   $('f_sisaJHK').value = d.sisaJHK + ' hari';
 
-  // New Target SPD = Target NS / JHK
   d.newTargetSPD = d.jhk>0 ? d.targetNS/d.jhk : 0;
   $('f_newTargetSPD').value = fmtRp(d.newTargetSPD);
 
-  // Actual NS Seharusnya = (Target NS / JHK) * HK
   d.actualNSseharusnya = d.jhk>0 ? (d.targetNS/d.jhk)*d.hk : 0;
   $('f_actualNSseharusnya').value = fmtRp(d.actualNSseharusnya);
 
-  // Gap TF
   d.gapTF = d.tfActual - d.tfShould;
   $('f_gapTF').value = fmtRp(d.gapTF);
   $('f_gapTF').style.color = d.gapTF>=0?'var(--success)':'var(--danger)';
 
-  // Growth
   d.growthRp = d.nsCurr - d.nsPrev;
   d.growthPct = d.nsPrev>0 ? ((d.nsCurr-d.nsPrev)/d.nsPrev)*100 : 0;
   $('f_growthRp').value = fmtRp(d.growthRp);
@@ -1466,7 +1472,6 @@ function recalc(){
   $('f_growthRp').style.color = d.growthRp>=0?'var(--success)':'var(--danger)';
   $('f_growthPct').style.color = d.growthPct>=0?'var(--success)':'var(--danger)';
 
-  // Gap GM
   d.gapGMpct = d.actualGMpct - d.targetGMpct;
   d.gapGMrp = d.actualGMrp - d.targetGMrp;
   $('f_gapGMpct').value = fmtPct(d.gapGMpct);
@@ -1474,22 +1479,16 @@ function recalc(){
   $('f_gapGMpct').style.color = d.gapGMpct>=0?'var(--success)':'var(--danger)';
   $('f_gapGMrp').style.color = d.gapGMrp>=0?'var(--success)':'var(--danger)';
 
-  // Achievement
   d.achievement = d.targetNS>0 ? (d.actualNS/d.targetNS)*100 : 0;
-  d.shift1Ach = d.shift1>0 ? (d.shift1/d.newTargetSPD)*100 : 0;
-  d.shift2Ach = d.shift2>0 ? (d.shift2/d.newTargetSPD)*100 : 0;
+  d.shift1Ach = d.newTargetSPD>0 ? (d.shift1/d.newTargetSPD)*100 : 0;
+  d.shift2Ach = d.newTargetSPD>0 ? (d.shift2/d.newTargetSPD)*100 : 0;
 
-  // Tabungan Target = Actual NS - Actual NS Seharusnya
   d.tabungan = d.actualNS - d.actualNSseharusnya;
-
-  // SPD Aktual
   d.spdAktual = d.hk>0 ? d.actualNS/d.hk : 0;
 
-  // Update result summary
   $('r_achievement').textContent = fmtPct(d.achievement);
   $('r_shift1ach').textContent = fmtPct(d.shift1Ach);
   $('r_shift2ach').textContent = fmtPct(d.shift2Ach);
-  $('r_tabungan').textContent = fmtRp(Math.abs(d.tabungan));
 
   const tBox = $('r_tabunganBox');
   const tLabel = $('r_tabunganLabel');
@@ -1507,7 +1506,6 @@ function recalc(){
     $('r_tabungan').textContent = '- '+fmtRp(Math.abs(d.tabungan));
   }
 
-  // Dashboard KPI
   $('kpiNS').textContent = fmtRp(d.actualNS);
   $('kpiNSpct').textContent = fmtPct(d.achievement);
   $('kpiNSpct').className = d.achievement>=100?'up':'down';
@@ -1533,7 +1531,7 @@ function recalc(){
 }
 
 /* =========================================================
-   SMART ACTION PLAN (Rule-Based)
+   SMART ACTION PLAN
 ========================================================= */
 function generateActionPlan(d){
   const plans = [];
@@ -1548,7 +1546,6 @@ function generateActionPlan(d){
     spdLow: d.spdAktual < d.newTargetSPD
   };
 
-  // Priority rules
   if(issues.growthMinus){
     plans.push({title:'Recovery Sales Agresif',desc:`Growth MoM minus ${fmtPct(Math.abs(d.growthPct))}. Fokus pada program promo, bundling produk fast-moving, dan aktivasi display end-cap untuk mendorong traffic pelanggan.`,tag:'Recovery Sales',priority:'HIGH'});
     plans.push({title:'Optimasi Product Availability',desc:'Pastikan OSA (On-Shelf Availability) di atas 96%. Lakukan restock harian untuk produk top 50 SKU dan minimalkan out-of-stock pada jam sibuk.',tag:'Recovery Sales',priority:'HIGH'});
@@ -1567,7 +1564,7 @@ function generateActionPlan(d){
   }
   if(issues.tabunganMinus){
     plans.push({title:'Closing Gap Target Bulanan',desc:`Terdapat hutang target ${fmtRp(Math.abs(d.tabungan))}. Hitung rata-rata SPD yang dibutuhkan untuk sisa hari kerja dan set target harian agresif.`,tag:'Closing Gap',priority:'HIGH'});
-    plans.push({title:'Ekstra Shift & Extended Hour',desc:'Evaluasi kebutuhan tambahan jam operasional atau ekstra staff pada peak hour untuk memaksimalkan penjualan di sisa hari kerja.`,tag:'Closing Gap',priority:'MEDIUM'});
+    plans.push({title:'Ekstra Shift & Extended Hour',desc:'Evaluasi kebutuhan tambahan jam operasional atau ekstra staff pada peak hour untuk memaksimalkan penjualan di sisa hari kerja.',tag:'Closing Gap',priority:'MEDIUM'});
   }
   if(issues.tabunganPlus){
     plans.push({title:'Jaga Buffer Target',desc:`Tabungan target ${fmtRp(d.tabungan)}. Jangan turunkan effort, pertahankan SPD minimal sama untuk mengantisipasi fluktuasi.`,tag:'Buffer',priority:'MEDIUM'});
@@ -1579,7 +1576,6 @@ function generateActionPlan(d){
     plans.push({title:'Peningkatan Sales Per Day',desc:`SPD aktual ${fmtRp(d.spdAktual)} di bawah new target ${fmtRp(d.newTargetSPD)}. Review display, planogram, dan execution promo harian.`,tag:'Operational',priority:'HIGH'});
   }
 
-  // Fill to 10 plans with generic best practices
   const genericPlans = [
     {title:'Daily Huddle & Briefing',desc:'Lakukan huddle 10 menit di awal shift untuk review target, sharing info promo, dan alignment tim.',tag:'Operational Excellence',priority:'MEDIUM'},
     {title:'Customer Engagement Program',desc:'Aktifkan sapaan 3M (Mengucapkan salam, Menyapa, Membantu) untuk meningkatkan conversion rate dan customer satisfaction.',tag:'Customer Experience',priority:'MEDIUM'},
@@ -1598,7 +1594,7 @@ function generateActionPlan(d){
     <div class="action-item">
       <div class="action-num">${i+1}</div>
       <div class="action-content">
-        <div class="action-title">${p.title} <span class="chip chip-${p.priority==='HIGH'?'danger':p.priority==='MEDIUM'?'warning':'info'}" style="margin-left:6px;font-size:9px">${p.priority}</span></div>
+        <div class="action-title">${p.title} <span class="chip chip-${p.priority==='HIGH'?'danger':p.priority==='MEDIUM'?'warning':'info'}" style="font-size:9px">${p.priority}</span></div>
         <div class="action-desc">${p.desc}</div>
         <span class="action-tag">${p.tag}</span>
       </div>
@@ -1618,18 +1614,18 @@ function getChartColors(){
   };
 }
 function updateChartsTheme(){
-  if(charts.ns) {charts.ns.destroy();charts.ns=null}
-  if(charts.ach) {charts.ach.destroy();charts.ach=null}
+  if(charts.ns) {try{charts.ns.destroy()}catch(e){};charts.ns=null}
+  if(charts.ach) {try{charts.ach.destroy()}catch(e){};charts.ach=null}
   updateCharts();
 }
 function updateCharts(){
   const d = state.data;
   const c = getChartColors();
 
-  // NS Chart
-  if(charts.ns) charts.ns.destroy();
-  const ctx1 = $('chartNS').getContext('2d');
-  const gradient1 = ctx1.createLinearGradient(0,0,0,200);
+  if(charts.ns) try{charts.ns.destroy()}catch(e){};
+  const ctx1 = $('chartNS');
+  if(!ctx1) return;
+  const gradient1 = ctx1.getContext('2d').createLinearGradient(0,0,0,200);
   gradient1.addColorStop(0,'rgba(0,91,172,.3)');
   gradient1.addColorStop(1,'rgba(0,91,172,0)');
   charts.ns = new Chart(ctx1,{
@@ -1658,8 +1654,7 @@ function updateCharts(){
     }
   });
 
-  // Achievement Chart
-  if(charts.ach) charts.ach.destroy();
+  if(charts.ach) try{charts.ach.destroy()}catch(e){};
   charts.ach = new Chart($('chartAch'),{
     type:'doughnut',
     data:{
@@ -1681,7 +1676,7 @@ function updateCharts(){
 }
 
 /* =========================================================
-   REPORT GENERATION
+   REPORT
 ========================================================= */
 function renderReport(){
   const d = state.data;
@@ -1691,7 +1686,7 @@ function renderReport(){
         <i class="ri-file-warning-line" style="font-size:48px;color:var(--text-soft)"></i>
         <h3 style="margin-top:12px">Belum Ada Data</h3>
         <p style="color:var(--text-muted);margin:8px 0 16px">Silakan input data terlebih dahulu</p>
-        <button class="btn btn-primary" onclick="navigateTo('input')"><i class="ri-edit-box-line"></i>Input Data</button>
+        <button class="btn btn-primary" type="button" onclick="navigateTo('input')"><i class="ri-edit-box-line"></i>Input Data</button>
       </div>`;
     return;
   }
@@ -1708,7 +1703,6 @@ function renderReport(){
 
   $('reportContainer').innerHTML = `
     <div class="report-preview" id="reportA4">
-      <!-- HEADER -->
       <div class="rp-header">
         <div class="rp-logo">${logoHtml}</div>
         <div class="rp-header-info">
@@ -1724,7 +1718,6 @@ function renderReport(){
         <div><strong>Tanggal:</strong> ${fmtDateTime(now)}</div>
       </div>
 
-      <!-- 1. MONITORING NET SALES -->
       <div class="rp-section">
         <h2>1. Monitoring Net Sales</h2>
         <table class="rp-table">
@@ -1739,7 +1732,6 @@ function renderReport(){
         </table>
       </div>
 
-      <!-- 2. PENCAPAIAN NET SALES -->
       <div class="rp-section">
         <h2>2. Pencapaian Net Sales</h2>
         <table class="rp-table">
@@ -1753,7 +1745,6 @@ function renderReport(){
         <div class="rp-chart"><canvas id="rpChartAch" height="180"></canvas></div>
       </div>
 
-      <!-- 3. MONITORING GROWTH -->
       <div class="rp-section">
         <h2>3. Monitoring Growth (MoM)</h2>
         <table class="rp-table">
@@ -1767,7 +1758,6 @@ function renderReport(){
         <div class="rp-chart"><canvas id="rpChartGrowth" height="180"></canvas></div>
       </div>
 
-      <!-- 4. GROSS MARGIN -->
       <div class="rp-section">
         <h2>4. Gross Margin</h2>
         <table class="rp-table">
@@ -1780,7 +1770,6 @@ function renderReport(){
         <div class="rp-chart"><canvas id="rpChartGM" height="180"></canvas></div>
       </div>
 
-      <!-- 5. REKAP TARGET -->
       <div class="rp-section">
         <h2>5. Rekap Target</h2>
         <table class="rp-table">
@@ -1800,13 +1789,11 @@ function renderReport(){
         </table>
       </div>
 
-      <!-- 6. ACTION PLAN -->
       <div class="rp-section">
         <h2>6. Action Plan</h2>
         ${generateActionPlanHTML(d)}
       </div>
 
-      <!-- NOTES -->
       <div class="rp-notes">
         <strong>Catatan:</strong><br>
         • NS = Net Sales (Penjualan Bersih)<br>
@@ -1818,7 +1805,6 @@ function renderReport(){
         • MoM = Month over Month (Bulan ke Bulan)
       </div>
 
-      <!-- SIGNATURE -->
       <div class="rp-sign">
         <div class="rp-sign-box">
           <div class="place">${d.sat||'SAT'}, ${fmtDate(now)}</div>
@@ -1831,7 +1817,6 @@ function renderReport(){
     </div>
   `;
 
-  // Render charts in report
   setTimeout(()=>renderReportCharts(d),100);
 }
 
@@ -1873,7 +1858,6 @@ function generateActionPlanHTML(d){
 }
 
 function renderReportCharts(d){
-  // Achievement bar
   const c1 = $('rpChartAch');
   if(c1){
     new Chart(c1,{
@@ -1894,7 +1878,6 @@ function renderReportCharts(d){
       }
     });
   }
-  // Growth
   const c2 = $('rpChartGrowth');
   if(c2){
     new Chart(c2,{
@@ -1915,7 +1898,6 @@ function renderReportCharts(d){
       }
     });
   }
-  // GM
   const c3 = $('rpChartGM');
   if(c3){
     new Chart(c3,{
@@ -1939,7 +1921,7 @@ function renderReportCharts(d){
 }
 
 /* =========================================================
-   EXPORT FUNCTIONS
+   EXPORT
 ========================================================= */
 async function exportPDF(){
   if(!$('reportA4')){toast('Generate report terlebih dahulu','error');return}
@@ -2040,11 +2022,10 @@ async function exportWord(){
    HISTORY
 ========================================================= */
 function saveData(){
-  try{
-    localStorage.setItem(LS.DATA,JSON.stringify(state.data));
-  }catch(e){}
+  try{localStorage.setItem(LS.DATA,JSON.stringify(state.data))}catch(e){}
 }
 function saveToHistory(){
+  if(!state.data || !state.data.nama) return;
   const history = JSON.parse(localStorage.getItem(LS.HISTORY)||'[]');
   const entry = {
     id:Date.now(),
@@ -2083,11 +2064,19 @@ function renderHistory(){
         </div>
       </div>
       <div class="history-actions">
-        <button class="btn btn-secondary btn-sm" onclick="loadHistory(${e.id})"><i class="ri-eye-line"></i>Load</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteHistory(${e.id})"><i class="ri-delete-bin-line"></i></button>
+        <button class="btn btn-secondary btn-sm" type="button" data-load="${e.id}"><i class="ri-eye-line"></i>Load</button>
+        <button class="btn btn-danger btn-sm" type="button" data-del="${e.id}"><i class="ri-delete-bin-line"></i></button>
       </div>
     </div>
   `).join('');
+
+  // bind history buttons
+  $('historyList').querySelectorAll('[data-load]').forEach(b=>{
+    b.addEventListener('click',()=>loadHistory(parseInt(b.dataset.load)));
+  });
+  $('historyList').querySelectorAll('[data-del]').forEach(b=>{
+    b.addEventListener('click',()=>deleteHistory(parseInt(b.dataset.del)));
+  });
 }
 function loadHistory(id){
   const h = JSON.parse(localStorage.getItem(LS.HISTORY)||'[]');
@@ -2101,29 +2090,31 @@ function loadHistory(id){
 }
 function deleteHistory(id){
   openModal('Hapus Laporan','<p>Yakin ingin menghapus laporan ini?</p>',
-    `<button class="btn btn-ghost" onclick="closeModal()">Batal</button>
-     <button class="btn btn-danger" onclick="confirmDeleteHistory(${id})">Hapus</button>`);
-}
-function confirmDeleteHistory(id){
-  let h = JSON.parse(localStorage.getItem(LS.HISTORY)||'[]');
-  h = h.filter(x=>x.id!==id);
-  localStorage.setItem(LS.HISTORY,JSON.stringify(h));
-  updateHistoryBadge();
-  renderHistory();
-  closeModal();
-  toast('Laporan dihapus','success');
+    `<button class="btn btn-ghost" type="button" id="modalCancel">Batal</button>
+     <button class="btn btn-danger" type="button" id="modalConfirm">Hapus</button>`);
+  $('modalCancel').addEventListener('click',closeModal);
+  $('modalConfirm').addEventListener('click',()=>{
+    let h = JSON.parse(localStorage.getItem(LS.HISTORY)||'[]');
+    h = h.filter(x=>x.id!==id);
+    localStorage.setItem(LS.HISTORY,JSON.stringify(h));
+    updateHistoryBadge();
+    renderHistory();
+    closeModal();
+    toast('Laporan dihapus','success');
+  });
 }
 function clearHistory(){
   openModal('Hapus Semua History','<p>Yakin ingin menghapus semua history? Tindakan ini tidak dapat dibatalkan.</p>',
-    `<button class="btn btn-ghost" onclick="closeModal()">Batal</button>
-     <button class="btn btn-danger" onclick="confirmClearHistory()">Hapus Semua</button>`);
-}
-function confirmClearHistory(){
-  localStorage.removeItem(LS.HISTORY);
-  updateHistoryBadge();
-  renderHistory();
-  closeModal();
-  toast('Semua history dihapus','success');
+    `<button class="btn btn-ghost" type="button" id="modalCancel">Batal</button>
+     <button class="btn btn-danger" type="button" id="modalConfirm">Hapus Semua</button>`);
+  $('modalCancel').addEventListener('click',closeModal);
+  $('modalConfirm').addEventListener('click',()=>{
+    localStorage.removeItem(LS.HISTORY);
+    updateHistoryBadge();
+    renderHistory();
+    closeModal();
+    toast('Semua history dihapus','success');
+  });
 }
 
 /* =========================================================
@@ -2154,16 +2145,17 @@ function populateForm(d){
 }
 function resetForm(){
   openModal('Reset Form','<p>Yakin ingin mereset semua input?</p>',
-    `<button class="btn btn-ghost" onclick="closeModal()">Batal</button>
-     <button class="btn btn-danger" onclick="confirmReset()">Reset</button>`);
-}
-function confirmReset(){
-  document.querySelectorAll('#page-input input[type="number"]').forEach(i=>i.value=0);
-  $('f_jhk').value=26;$('f_hk').value=14;
-  $('f_nama').value='';$('f_kode').value='';$('f_sat').value='';
-  recalc();
-  closeModal();
-  toast('Form direset','success');
+    `<button class="btn btn-ghost" type="button" id="modalCancel">Batal</button>
+     <button class="btn btn-danger" type="button" id="modalConfirm">Reset</button>`);
+  $('modalCancel').addEventListener('click',closeModal);
+  $('modalConfirm').addEventListener('click',()=>{
+    document.querySelectorAll('#page-input input[type="number"]').forEach(i=>i.value=0);
+    $('f_jhk').value=26;$('f_hk').value=14;
+    $('f_nama').value='';$('f_kode').value='';$('f_sat').value='';
+    recalc();
+    closeModal();
+    toast('Form direset','success');
+  });
 }
 function loadSampleData(){
   const sample = {
@@ -2271,6 +2263,102 @@ function clearTTD(){
 }
 
 /* =========================================================
+   EVENT BINDING (FIX CLICK ISSUES)
+========================================================= */
+function bindAllEvents(){
+  // Sidebar nav
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    n.addEventListener('click',e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      navigateTo(n.dataset.page);
+    });
+  });
+
+  // Mobile menu
+  $('menuToggle').addEventListener('click',e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    $('sidebar').classList.toggle('open');
+    $('sidebarOverlay').classList.toggle('active');
+  });
+  $('sidebarOverlay').addEventListener('click',()=>{
+    $('sidebar').classList.remove('open');
+    $('sidebarOverlay').classList.remove('active');
+  });
+
+  // Theme toggle (header)
+  $('themeToggle').addEventListener('click',e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    toggleTheme();
+  });
+
+  // Theme toggle (settings)
+  $('toggleDark').addEventListener('click',e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    toggleTheme();
+  });
+
+  // Notification
+  $('notifBtn').addEventListener('click',()=>{
+    toast('Tidak ada notifikasi baru','info');
+  });
+
+  // Profile
+  $('profileBtn').addEventListener('click',()=>{
+    navigateTo('settings');
+  });
+
+  // Dashboard buttons
+  $('btnReset').addEventListener('click',resetForm);
+  $('btnGoInput').addEventListener('click',()=>navigateTo('input'));
+
+  // Input buttons
+  $('btnSample').addEventListener('click',loadSampleData);
+  $('btnGenerate').addEventListener('click',generateReport);
+
+  // Report buttons
+  $('btnPNG').addEventListener('click',exportPNG);
+  $('btnWord').addEventListener('click',exportWord);
+  $('btnPrint').addEventListener('click',()=>window.print());
+  $('btnPDF').addEventListener('click',exportPDF);
+
+  // History
+  $('btnClearHistory').addEventListener('click',clearHistory);
+
+  // Settings
+  $('btnSaveSettings').addEventListener('click',()=>saveSettings(false));
+  $('btnUploadLogo').addEventListener('click',()=>$('logoInput').click());
+  $('btnClearLogo').addEventListener('click',clearLogo);
+  $('logoInput').addEventListener('change',handleLogo);
+  $('btnUploadTTD').addEventListener('click',()=>$('ttdInput').click());
+  $('btnClearTTD').addEventListener('click',clearTTD);
+  $('ttdInput').addEventListener('change',handleTTD);
+
+  // Modal close
+  $('modalClose').addEventListener('click',closeModal);
+  $('modal').addEventListener('click',e=>{
+    if(e.target===$('modal')) closeModal();
+  });
+
+  // Form inputs - real-time calculation
+  const formInputs = document.querySelectorAll('#page-input input[type="number"], #page-input select');
+  formInputs.forEach(inp=>{
+    inp.addEventListener('input',recalc);
+    inp.addEventListener('change',recalc);
+  });
+
+  // Keyboard: ESC to close modal
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape' && $('modal').classList.contains('active')){
+      closeModal();
+    }
+  });
+}
+
+/* =========================================================
    INIT
 ========================================================= */
 function init(){
@@ -2281,9 +2369,9 @@ function init(){
     populateForm(saved);
   }
   updateHistoryBadge();
+  bindAllEvents();
   recalc();
 
-  // Loading simulation
   setTimeout(()=>toast('Selamat datang, '+state.settings.nama+'!','success'),500);
 }
 
